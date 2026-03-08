@@ -1,0 +1,8 @@
+cd /home/learn/public_html
+git pull
+npm install
+npm run build
+pm2 restart toko-academy
+
+
+<!-- cp -r .next/standalone/* . -->
