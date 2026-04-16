@@ -34,3 +34,22 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+
+
+
+# Stop the broken pm2 instance
+pm2 delete toko-academy
+
+# Init git in the existing directory and pull
+cd /home/learn/public_html
+git init
+git remote add origin https://github.com/danielishakutv/toko_dlc.git
+git fetch origin
+git checkout -f main
+
+# Install, build, start
+npm install
+npm run build
+pm2 start npm --name "toko-academy" -- start -- -p 3000
+pm2 save
