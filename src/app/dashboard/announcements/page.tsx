@@ -1,4 +1,8 @@
-import { Pin } from "lucide-react";
+const PinIcon = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12 17v5m-3-8.5L5 10l7-7 7 7-4 3.5M9 13.5 7.5 21h9L15 13.5" />
+  </svg>
+);
 
 const announcements = [
   {
@@ -65,7 +69,7 @@ export default function AnnouncementsPage() {
             <div className="flex items-start justify-between gap-4 mb-2">
               <div className="flex items-center gap-2">
                 {a.pinned && (
-                  <Pin className="w-3.5 h-3.5 text-gray-400 shrink-0" strokeWidth={1.5} />
+                  <PinIcon className="w-3.5 h-3.5 text-gray-400 shrink-0" />
                 )}
                 <h2 className="text-sm font-bold text-gray-900">{a.title}</h2>
               </div>

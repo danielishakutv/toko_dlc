@@ -6,7 +6,41 @@ import { useParams } from "next/navigation";
 import { courses } from "@/app/data";
 import { courseContentMap } from "@/app/data-content";
 import CourseIcon from "@/app/CourseIcon";
-import { MessageCircle, CalendarDays, MessagesSquare, Mail, Download, Flag, FileText, ExternalLink, Play, ChevronLeft, ChevronRight } from "lucide-react";
+
+/* ── Inline SVG icon components ── */
+const MessageCircleIcon = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0ZM3.118 12.467A10.712 10.712 0 0 0 3 13.5c0 1.598.348 3.105.97 4.46l-.86 2.79a.75.75 0 0 0 .92.92l2.79-.86A10.465 10.465 0 0 0 12 22.5c5.799 0 10.5-4.122 10.5-9S17.799 4.5 12 4.5 1.5 8.622 1.5 13.5c0 1.598.348 3.105.97 4.46" /></svg>
+);
+const CalendarDaysIcon = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" /></svg>
+);
+const MessagesSquareIcon = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3.68-3.091a28.687 28.687 0 0 1-1.32-.072c-.943-.063-1.78-.607-2.23-1.378M7.5 15.75l3.68 3.091c.41.035.82.065 1.233.088A2.22 2.22 0 0 0 14.61 17.5V13.214c0-1.136-.847-2.1-1.98-2.193a39.9 39.9 0 0 0-5.26 0c-1.133.093-1.98 1.057-1.98 2.193v4.286c0 .837.46 1.58 1.155 1.951" /></svg>
+);
+const MailIcon = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" /></svg>
+);
+const DownloadIcon = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>
+);
+const FlagIcon = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 3v1.5M3 21v-6m0 0 2.77-.693a9 9 0 0 1 6.208.682l.108.054a9 9 0 0 0 6.086.71l3.114-.732a48.524 48.524 0 0 1-.005-10.499l-3.11.732a9 9 0 0 1-6.085-.711l-.108-.054a9 9 0 0 0-6.208-.682L3 4.5M3 15V4.5" /></svg>
+);
+const FileTextIcon = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" /></svg>
+);
+const ExternalLinkIcon = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" /></svg>
+);
+const PlayIcon = ({ className, fill }: { className?: string; fill?: string }) => (
+  <svg className={className} fill={fill || "none"} stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z" /></svg>
+);
+const ChevronLeftIcon = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" /></svg>
+);
+const ChevronRightIcon = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" /></svg>
+);
 
 // Demo completion data per course
 const completionMap: Record<string, Record<string, boolean>> = {
@@ -60,12 +94,12 @@ function lessonId(lesson: string) {
 }
 
 const quickActions = [
-  { label: "Join WhatsApp Group", icon: <MessageCircle className="w-4 h-4" strokeWidth={1.5} />, color: "bg-green-50 text-green-700 border-green-200" },
-  { label: "Course Schedule", icon: <CalendarDays className="w-4 h-4" strokeWidth={1.5} />, color: "bg-blue-50 text-blue-700 border-blue-200" },
-  { label: "Discussion Forum", icon: <MessagesSquare className="w-4 h-4" strokeWidth={1.5} />, color: "bg-purple-50 text-purple-700 border-purple-200" },
-  { label: "Contact Instructor", icon: <Mail className="w-4 h-4" strokeWidth={1.5} />, color: "bg-orange-50 text-orange-700 border-orange-200" },
-  { label: "Download Resources", icon: <Download className="w-4 h-4" strokeWidth={1.5} />, color: "bg-gray-50 text-gray-700 border-gray-200" },
-  { label: "Report an Issue", icon: <Flag className="w-4 h-4" strokeWidth={1.5} />, color: "bg-red-50 text-red-700 border-red-200" },
+  { label: "Join WhatsApp Group", icon: <MessageCircleIcon className="w-4 h-4" />, color: "bg-green-50 text-green-700 border-green-200" },
+  { label: "Course Schedule", icon: <CalendarDaysIcon className="w-4 h-4" />, color: "bg-blue-50 text-blue-700 border-blue-200" },
+  { label: "Discussion Forum", icon: <MessagesSquareIcon className="w-4 h-4" />, color: "bg-purple-50 text-purple-700 border-purple-200" },
+  { label: "Contact Instructor", icon: <MailIcon className="w-4 h-4" />, color: "bg-orange-50 text-orange-700 border-orange-200" },
+  { label: "Download Resources", icon: <DownloadIcon className="w-4 h-4" />, color: "bg-gray-50 text-gray-700 border-gray-200" },
+  { label: "Report an Issue", icon: <FlagIcon className="w-4 h-4" />, color: "bg-red-50 text-red-700 border-red-200" },
 ];
 
 export default function EnrolledCoursePage() {
@@ -114,7 +148,7 @@ export default function EnrolledCoursePage() {
       {/* Course header */}
       <div className="border-b border-white/40 bg-white/70 backdrop-blur-sm px-4 sm:px-6 py-4">
         <Link href="/dashboard/my-courses" className="text-sm text-gray-500 hover:text-gray-900 transition-colors mb-3 inline-flex items-center gap-1">
-          <ChevronLeft className="w-4 h-4" />
+          <ChevronLeftIcon className="w-4 h-4" />
           Back to My Courses
         </Link>
 
@@ -193,7 +227,7 @@ export default function EnrolledCoursePage() {
               onClick={() => document.getElementById("resources")?.scrollIntoView({ behavior: "smooth", block: "start" })}
               className="w-full text-left px-4 py-2 flex items-center gap-2.5 text-sm text-gray-600 hover:bg-gray-50 mt-2 border-t border-gray-100 pt-3"
             >
-              <Download className="w-4 h-4 text-gray-400" />
+              <DownloadIcon className="w-4 h-4 text-gray-400" />
               Resources
             </button>
           </div>
@@ -205,7 +239,7 @@ export default function EnrolledCoursePage() {
           className="hidden lg:flex items-center justify-center w-5 shrink-0 bg-white/40 hover:bg-white/60 border-r border-white/40 transition-colors"
           aria-label={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
         >
-          {sidebarOpen ? <ChevronLeft className="w-3 h-3 text-gray-400" /> : <ChevronRight className="w-3 h-3 text-gray-400" />}
+          {sidebarOpen ? <ChevronLeftIcon className="w-3 h-3 text-gray-400" /> : <ChevronRightIcon className="w-3 h-3 text-gray-400" />}
         </button>
 
         {/* Main content */}
@@ -250,7 +284,7 @@ export default function EnrolledCoursePage() {
                         <div className="aspect-video bg-gray-900 rounded-xl mb-5 flex items-center justify-center relative overflow-hidden group cursor-pointer">
                           <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/20" />
                           <div className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center group-hover:bg-white/30 transition-colors">
-                            <Play className="w-6 h-6 text-white ml-0.5" fill="white" />
+                            <PlayIcon className="w-6 h-6 text-white ml-0.5" fill="white" />
                           </div>
                           <span className="absolute bottom-3 right-3 text-xs text-white/80 bg-black/40 rounded px-2 py-0.5">{lessonContent.duration}</span>
                         </div>
@@ -303,7 +337,7 @@ export default function EnrolledCoursePage() {
                       {content.resources.filter((r) => r.type === "pdf").map((r, i) => (
                         <div key={i} className="flex items-center gap-3 bg-white/70 backdrop-blur-sm border border-white/60 shadow-sm rounded-xl px-4 py-3 hover:shadow-md transition-all duration-200 group cursor-pointer">
                           <div className="w-9 h-9 rounded-lg bg-red-50 flex items-center justify-center shrink-0">
-                            <FileText className="w-4 h-4 text-red-500" />
+                            <FileTextIcon className="w-4 h-4 text-red-500" />
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-gray-900">{r.title}</p>
@@ -311,7 +345,7 @@ export default function EnrolledCoursePage() {
                           </div>
                           <div className="flex items-center gap-2 shrink-0">
                             <span className="text-xs text-gray-400">{r.size}</span>
-                            <Download className="w-4 h-4 text-gray-400 group-hover:text-gray-600" />
+                            <DownloadIcon className="w-4 h-4 text-gray-400 group-hover:text-gray-600" />
                           </div>
                         </div>
                       ))}
@@ -327,13 +361,13 @@ export default function EnrolledCoursePage() {
                       {content.resources.filter((r) => r.type === "link").map((r, i) => (
                         <div key={i} className="flex items-center gap-3 bg-white/70 backdrop-blur-sm border border-white/60 shadow-sm rounded-xl px-4 py-3 hover:shadow-md transition-all duration-200 group cursor-pointer">
                           <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
-                            <ExternalLink className="w-4 h-4 text-blue-500" />
+                            <ExternalLinkIcon className="w-4 h-4 text-blue-500" />
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-gray-900">{r.title}</p>
                             <p className="text-xs text-gray-500">{r.description}</p>
                           </div>
-                          <ExternalLink className="w-4 h-4 text-gray-400 group-hover:text-gray-600 shrink-0" />
+                          <ExternalLinkIcon className="w-4 h-4 text-gray-400 group-hover:text-gray-600 shrink-0" />
                         </div>
                       ))}
                     </div>

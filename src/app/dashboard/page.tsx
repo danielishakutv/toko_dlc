@@ -1,15 +1,27 @@
-import { BookOpen, CircleCheck, Clock, Trophy } from "lucide-react";
+import type { ReactNode } from "react";
 import { courses } from "../data";
 import CourseIcon from "../CourseIcon";
-import type { ReactNode } from "react";
 
 const registeredCourses = courses.filter((c) => c.status === "Registered");
 
+const BookOpenIcon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" /></svg>
+);
+const CircleCheckIcon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+);
+const ClockIcon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path strokeLinecap="round" d="M12 6v6l4 2" /></svg>
+);
+const TrophyIcon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 18h-9M8 2h8l-1 7h-6L8 2ZM12 9v5m-4 4h8m-8 0a2 2 0 0 1-2-2h12a2 2 0 0 1-2 2M6 2H4a2 2 0 0 0-2 2v1a4 4 0 0 0 4 4m12-7h2a2 2 0 0 1 2 2v1a4 4 0 0 1-4 4" /></svg>
+);
+
 const stats: { label: string; value: number; icon: ReactNode }[] = [
-  { label: "Enrolled Courses", value: registeredCourses.length, icon: <BookOpen className="w-5 h-5" strokeWidth={1.5} /> },
-  { label: "Completed", value: 1, icon: <CircleCheck className="w-5 h-5" strokeWidth={1.5} /> },
-  { label: "In Progress", value: 2, icon: <Clock className="w-5 h-5" strokeWidth={1.5} /> },
-  { label: "Certificates", value: 1, icon: <Trophy className="w-5 h-5" strokeWidth={1.5} /> },
+  { label: "Enrolled Courses", value: registeredCourses.length, icon: <BookOpenIcon /> },
+  { label: "Completed", value: 1, icon: <CircleCheckIcon /> },
+  { label: "In Progress", value: 2, icon: <ClockIcon /> },
+  { label: "Certificates", value: 1, icon: <TrophyIcon /> },
 ];
 
 const upcomingDeadlines = [
