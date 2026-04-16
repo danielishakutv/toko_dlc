@@ -23,7 +23,7 @@ export const courses: Course[] = [
   {
     slug: "web-development-fundamentals",
     title: "Web Development Fundamentals",
-    icon: "🌐",
+    icon: "globe",
     description:
       "Learn HTML, CSS, and JavaScript from scratch. Build real-world projects and launch your career in web development.",
     status: "Registered",
@@ -57,7 +57,7 @@ export const courses: Course[] = [
   {
     slug: "data-science-with-python",
     title: "Data Science with Python",
-    icon: "📊",
+    icon: "bar-chart",
     description:
       "Master data analysis, visualization, and machine learning using Python and popular libraries like Pandas and Scikit-learn.",
     status: null,
@@ -91,7 +91,7 @@ export const courses: Course[] = [
   {
     slug: "digital-marketing-essentials",
     title: "Digital Marketing Essentials",
-    icon: "📱",
+    icon: "smartphone",
     description:
       "Understand SEO, social media marketing, content strategy, and analytics to grow any business online.",
     status: null,
@@ -124,7 +124,7 @@ export const courses: Course[] = [
   {
     slug: "ui-ux-design-principles",
     title: "UI/UX Design Principles",
-    icon: "🎨",
+    icon: "palette",
     description:
       "Learn user-centered design, wireframing, prototyping, and usability testing to create delightful digital experiences.",
     status: "Registered",
@@ -157,7 +157,7 @@ export const courses: Course[] = [
   {
     slug: "cloud-computing-basics",
     title: "Cloud Computing Basics",
-    icon: "☁️",
+    icon: "cloud",
     description:
       "Get started with cloud platforms, deployment, and DevOps practices for modern software delivery.",
     status: null,
@@ -190,7 +190,7 @@ export const courses: Course[] = [
   {
     slug: "cybersecurity-awareness",
     title: "Cybersecurity Awareness",
-    icon: "🔒",
+    icon: "shield",
     description:
       "Learn to identify threats, protect data, and implement security best practices in your organization.",
     status: "Registered",

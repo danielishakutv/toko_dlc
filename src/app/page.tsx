@@ -1,223 +1,152 @@
-import Link from "next/link";
-import Header from "./Header";
-import Footer from "./Footer";
-import Newsletter from "./Newsletter";
+"use client";
 
-const featuredCourses = [
-  { name: "Web Development Fundamentals", slug: "web-development-fundamentals" },
-  { name: "Data Science with Python", slug: "data-science-with-python" },
-];
+import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 
-const courseCategories = [
+const slides = [
   {
-    title: "AI Fluency Courses",
-    description:
-      "Build your AI literacy with courses on frameworks, prompt engineering, and responsible AI use.",
-    bg: "bg-[#c8d8d4]",
-    cardBg: "bg-[#b3c7c2]",
-    items: [
-      { name: "AI Fluency: Framework & Foundations", icon: "🤖", slug: null },
-      { name: "Teaching AI Fluency", icon: "🎓", slug: null },
-      { name: "Prompt Engineering Essentials", icon: "💬", slug: null },
-    ],
+    title: "Learn at Your Own Pace",
+    description: "Access courses anytime, anywhere. Our flexible learning platform adapts to your schedule.",
+    gradient: "from-violet-600 to-indigo-700",
   },
   {
-    title: "Professional Courses",
-    description:
-      "Advance your career with industry-relevant skills in marketing, cloud, and cybersecurity.",
-    bg: "bg-[#d4cfe0]",
-    cardBg: "bg-[#c3bbd3]",
-    items: [
-      { name: "Digital Marketing Essentials", icon: "📱", slug: "digital-marketing-essentials" },
-      { name: "Cloud Computing Basics", icon: "☁️", slug: "cloud-computing-basics" },
-      { name: "Cybersecurity Awareness", icon: "🔒", slug: "cybersecurity-awareness" },
-    ],
+    title: "Expert-Led Courses",
+    description: "Learn from industry professionals with real-world experience in web development, design, and more.",
+    gradient: "from-indigo-600 to-blue-700",
   },
   {
-    title: "Corporate Programs",
-    description:
-      "Upskill your teams with tailored programs on leadership, collaboration, and data-driven strategy.",
-    bg: "bg-[#7eaac4]",
-    cardBg: "bg-[#6a9ab8]",
-    items: [
-      { name: "Leadership in the AI Age", icon: "🏢", slug: null },
-      { name: "Team Collaboration Tools", icon: "🤝", slug: null },
-      { name: "Data-Driven Decision Making", icon: "📈", slug: null },
-    ],
+    title: "Earn Certificates",
+    description: "Complete courses and earn certificates to showcase your skills and advance your career.",
+    gradient: "from-purple-600 to-fuchsia-600",
   },
   {
-    title: "Kids Coding Lessons",
-    description:
-      "Fun, project-based coding lessons for young learners ages 8–16.",
-    bg: "bg-[#f0dcc8]",
-    cardBg: "bg-[#e3ccb2]",
-    items: [
-      { name: "Scratch for Beginners", icon: "🧩", slug: null },
-      { name: "Build Your First Game", icon: "🎮", slug: null },
-      { name: "Web Design for Kids", icon: "🖍️", slug: null },
-    ],
-  },
-  {
-    title: "Workshops",
-    description:
-      "Hands-on, focused sessions to sharpen practical skills in a single sitting.",
-    bg: "bg-[#c4d4c0]",
-    cardBg: "bg-[#b2c5ad]",
-    items: [
-      { name: "Resume Building with AI", icon: "📝", slug: null },
-      { name: "Public Speaking Mastery", icon: "🎤", slug: null },
-      { name: "Design Thinking Sprint", icon: "💡", slug: null },
-    ],
-  },
-  {
-    title: "Bootcamps",
-    description:
-      "Intensive, immersive programs to go from beginner to job-ready in weeks.",
-    bg: "bg-[#d4c4c4]",
-    cardBg: "bg-[#c5b2b2]",
-    items: [
-      { name: "Full-Stack Developer Bootcamp", icon: "⚡", slug: null },
-      { name: "Data Analytics Bootcamp", icon: "🔬", slug: null },
-      { name: "Product Management Bootcamp", icon: "🚀", slug: null },
-    ],
+    title: "Join a Community",
+    description: "Connect with fellow learners, participate in discussions, and grow together.",
+    gradient: "from-fuchsia-600 to-rose-500",
   },
 ];
 
-export default function Home() {
+export default function LoginPage() {
+  const router = useRouter();
+  const [email, setEmail] = useState("learner@tokoacademy.com");
+  const [password, setPassword] = useState("demo1234");
+  const [error, setError] = useState("");
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  const nextSlide = useCallback(() => {
+    setCurrentSlide((prev) => (prev + 1) % slides.length);
+  }, []);
+
+  useEffect(() => {
+    const interval = setInterval(nextSlide, 4000);
+    return () => clearInterval(interval);
+  }, [nextSlide]);
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (email === "learner@tokoacademy.com" && password === "demo1234") {
+      router.push("/dashboard");
+    } else {
+      setError("Invalid credentials. Use the pre-filled demo data.");
+    }
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      <Header />
+    <div className="min-h-screen flex">
+      {/* Left: Carousel */}
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
+        {slides.map((slide, i) => (
+          <div
+            key={i}
+            className={`absolute inset-0 bg-gradient-to-br ${slide.gradient} flex flex-col items-center justify-center px-12 text-white transition-opacity duration-700 ease-in-out ${
+              i === currentSlide ? "opacity-100" : "opacity-0"
+            }`}
+          >
+            {/* Decorative shapes */}
+            <div className="absolute top-12 left-12 w-24 h-24 rounded-full border border-white/20" />
+            <div className="absolute bottom-20 right-16 w-32 h-32 rounded-full border border-white/10" />
+            <div className="absolute top-1/4 right-24 w-16 h-16 rounded-lg border border-white/15 rotate-12" />
 
-      <main className="flex-1 w-full">
-        {/* Hero Section */}
-        <section className="bg-white border-b border-gray-100">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24 text-center">
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 tracking-tight leading-tight">
-              Toko Academy
-            </h1>
-            <p className="mt-6 text-lg sm:text-xl text-gray-600 leading-relaxed max-w-2xl mx-auto">
-              Get in the know with Toko Academy resources. From web development
-              guides to AI fluency courses and professional certifications, the
-              academy has you covered.
-            </p>
-            <div className="mt-8 flex items-center justify-center gap-4">
-              <Link
-                href="/courses"
-                className="inline-block text-sm font-medium text-white bg-gray-900 hover:bg-gray-800 rounded-full px-6 py-3 transition-colors"
-              >
-                Browse courses
-              </Link>
-              <Link
-                href="/signup"
-                className="inline-block text-sm font-medium text-gray-900 border border-gray-300 hover:border-gray-900 rounded-full px-6 py-3 transition-colors"
-              >
-                Create free account
-              </Link>
+            <div className="relative z-10 max-w-md text-center">
+              <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center mx-auto mb-8">
+                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342" />
+                </svg>
+              </div>
+              <h2 className="text-3xl font-bold mb-4">{slide.title}</h2>
+              <p className="text-lg text-white/80 leading-relaxed">{slide.description}</p>
             </div>
           </div>
-        </section>
+        ))}
 
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-          {/* Featured Courses */}
-          <section className="bg-[#d9cfc4] rounded-2xl p-6 sm:p-8 mb-10">
-            <div className="flex flex-col lg:flex-row gap-6 lg:gap-10">
-              <div className="flex-1">
-                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3">
-                  Featured courses
-                </h2>
-                <p className="text-sm text-gray-700 leading-relaxed mb-5 max-w-md">
-                  New courses available on Toko Academy. Learn more in-depth about
-                  AI Fluency, web development, data science and more. Earn
-                  certificates upon completion.
-                </p>
-                <Link
-                  href="/courses"
-                  className="inline-block text-sm font-medium text-gray-900 border border-gray-900 rounded-full px-5 py-2 hover:bg-gray-900 hover:text-white transition-colors"
-                >
-                  See all courses
-                </Link>
-              </div>
-              <div className="flex gap-4 lg:shrink-0">
-                {featuredCourses.map((fc) => (
-                  <Link
-                    key={fc.slug}
-                    href={`/course/${fc.slug}`}
-                    className="bg-[#c4b9ad] rounded-xl p-5 flex flex-col justify-between w-40 sm:w-48 hover:bg-[#b8ac9f] transition-colors"
-                  >
-                    <div>
-                      <p className="text-xs text-gray-700 mb-1">Featured Course</p>
-                      <p className="text-sm font-semibold text-gray-900 leading-snug">
-                        {fc.name}
-                      </p>
-                    </div>
-                    <span className="mt-4 text-gray-900 self-end text-lg">&rarr;</span>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          </section>
-
-          {/* Course category sections */}
-          {courseCategories.map((cat) => (
-            <section
-              key={cat.title}
-              className={`${cat.bg} rounded-2xl p-6 sm:p-8 mb-6`}
-            >
-              <div className="flex flex-col lg:flex-row gap-6 lg:gap-10">
-                <div className="flex-1 min-w-0">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                    {cat.title}
-                  </h2>
-                  <p className="text-sm text-gray-700 leading-relaxed mb-5 max-w-md">
-                    {cat.description}
-                  </p>
-                  <span className="inline-block text-sm font-medium text-gray-900 border border-gray-900 rounded-full px-5 py-2 cursor-pointer hover:bg-gray-900 hover:text-white transition-colors">
-                    Learn more
-                  </span>
-                </div>
-                <div className="flex flex-col sm:flex-row gap-3 lg:shrink-0">
-                  {cat.items.map((item) => {
-                    const card = (
-                      <div className="flex flex-col justify-between h-full">
-                        <div>
-                          <span className="text-2xl">{item.icon}</span>
-                          <p className="text-sm font-semibold text-gray-900 mt-2 leading-snug">
-                            {item.name}
-                          </p>
-                        </div>
-                        <span className="mt-4 text-gray-900 self-end text-lg">
-                          &rarr;
-                        </span>
-                      </div>
-                    );
-                    return item.slug ? (
-                      <Link
-                        key={item.name}
-                        href={`/course/${item.slug}`}
-                        className={`${cat.cardBg} rounded-xl p-5 w-full sm:w-40 hover:brightness-95 transition`}
-                      >
-                        {card}
-                      </Link>
-                    ) : (
-                      <div
-                        key={item.name}
-                        className={`${cat.cardBg} rounded-xl p-5 w-full sm:w-40`}
-                      >
-                        {card}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </section>
+        {/* Slide indicators */}
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+          {slides.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setCurrentSlide(i)}
+              className={`h-2 rounded-full transition-all duration-300 ${
+                i === currentSlide ? "w-8 bg-white" : "w-2 bg-white/40"
+              }`}
+            />
           ))}
-
-          {/* Newsletter */}
-          <Newsletter />
         </div>
-      </main>
+      </div>
 
-      <Footer />
+      {/* Right: Sign in */}
+      <div className="flex-1 flex items-center justify-center px-6 sm:px-12 bg-gradient-to-br from-slate-100 via-purple-50 to-indigo-50">
+        <div className="w-full max-w-sm">
+          <div className="text-xl font-bold tracking-tight bg-gradient-to-r from-violet-700 to-indigo-600 bg-clip-text text-transparent mb-8">
+            TOKO ACADEMY
+          </div>
+
+          <div className="bg-white/70 backdrop-blur-xl border border-white/60 shadow-xl rounded-2xl p-6 sm:p-8">
+            <h1 className="text-2xl font-bold text-gray-900 mb-1">Sign in</h1>
+            <p className="text-sm text-gray-500 mb-6">
+              Welcome back to your learning dashboard
+            </p>
+
+            {error && (
+              <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2 mb-4">
+                {error}
+              </p>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="w-full border border-gray-200/60 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition bg-white/60"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="w-full border border-gray-200/60 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition bg-white/60"
+                />
+              </div>
+              <button
+                type="submit"
+                className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-sm font-semibold rounded-xl px-4 py-2.5 hover:from-violet-700 hover:to-indigo-700 transition-all duration-200 shadow-md shadow-violet-500/25"
+              >
+                Sign in
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

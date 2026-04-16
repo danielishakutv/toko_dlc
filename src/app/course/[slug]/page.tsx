@@ -3,6 +3,7 @@ import Link from "next/link";
 import Header from "../../Header";
 import Footer from "../../Footer";
 import { courses } from "../../data";
+import CourseIcon from "../../CourseIcon";
 
 export function generateStaticParams() {
   return courses.map((c) => ({ slug: c.slug }));
@@ -28,7 +29,7 @@ export default async function CoursePage({
             Toko Academy
           </Link>{" "}
           /{" "}
-          <Link href="/" className="hover:text-gray-700">
+          <Link href="/courses" className="hover:text-gray-700">
             Courses
           </Link>{" "}
           / <span className="text-gray-700">{course.title}</span>
@@ -65,7 +66,9 @@ export default async function CoursePage({
           {/* Right — Thumbnail / Video placeholder */}
           <div className="lg:w-[420px] shrink-0">
             <div className="w-full aspect-video bg-gray-200 rounded-xl flex items-center justify-center">
-              <span className="text-6xl">{course.icon}</span>
+              <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center">
+                <CourseIcon name={course.icon} className="w-8 h-8 text-gray-700" />
+              </div>
             </div>
           </div>
         </div>
@@ -170,8 +173,8 @@ export default async function CoursePage({
         <section className="bg-white border border-gray-200 rounded-xl p-6 sm:p-8">
           <h2 className="text-xl font-bold text-gray-900 mb-4">Instructor</h2>
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-full bg-gray-200 shrink-0 flex items-center justify-center text-2xl">
-              👩‍🏫
+            <div className="w-14 h-14 rounded-full bg-gray-200 shrink-0 flex items-center justify-center">
+              <svg className="w-7 h-7 text-gray-500" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>
             </div>
             <div>
               <p className="font-semibold text-gray-900">Toko Academy Team</p>

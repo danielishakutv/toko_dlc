@@ -2,6 +2,7 @@ import Link from "next/link";
 import Header from "../Header";
 import Footer from "../Footer";
 import { courses } from "../data";
+import CourseIcon from "../CourseIcon";
 
 export default function CoursesPage() {
   return (
@@ -23,7 +24,9 @@ export default function CoursesPage() {
               href={`/course/${course.slug}`}
               className="bg-white rounded-xl border border-gray-200 p-6 flex flex-col sm:flex-row sm:items-start gap-4 sm:gap-5 hover:shadow-md transition-shadow"
             >
-              <span className="text-4xl shrink-0">{course.icon}</span>
+              <div className="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center shrink-0">
+                <CourseIcon name={course.icon} className="w-6 h-6 text-gray-700" />
+              </div>
               <div className="flex-1 min-w-0">
                 <h2 className="text-lg font-semibold text-gray-900">
                   {course.title}

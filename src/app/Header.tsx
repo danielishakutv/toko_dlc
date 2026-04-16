@@ -44,16 +44,10 @@ export default function Header() {
           )}
           <div className="flex items-center gap-3 ml-2">
             <Link
-              href="/login"
-              className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
-            >
-              Log in
-            </Link>
-            <Link
-              href="/signup"
+              href="/"
               className="text-sm font-medium text-white bg-gray-900 hover:bg-gray-800 rounded-full px-4 py-2 transition-colors"
             >
-              Sign up
+              Log in
             </Link>
           </div>
         </nav>
@@ -142,18 +136,11 @@ export default function Header() {
             {/* Auth buttons */}
             <div className="p-4 border-t border-gray-200 flex flex-col gap-2">
               <Link
-                href="/login"
-                onClick={() => setOpen(false)}
-                className="block text-center px-3 py-3 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors"
-              >
-                Log in
-              </Link>
-              <Link
-                href="/signup"
+                href="/"
                 onClick={() => setOpen(false)}
                 className="block text-center px-3 py-3 rounded-lg text-sm font-medium text-white bg-gray-900 hover:bg-gray-800 transition-colors"
               >
-                Sign up
+                Log in
               </Link>
             </div>
           </div>
