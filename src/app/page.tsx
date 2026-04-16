@@ -28,9 +28,10 @@ const slides = [
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("learner@tokoacademy.com");
-  const [password, setPassword] = useState("demo1234");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
 
   const nextSlide = useCallback(() => {
@@ -42,12 +43,28 @@ export default function LoginPage() {
     return () => clearInterval(interval);
   }, [nextSlide]);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (email === "learner@tokoacademy.com" && password === "demo1234") {
+    setError("");
+    setLoading(true);
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "Login failed");
+        return;
+      }
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
       router.push("/dashboard");
-    } else {
-      setError("Invalid credentials. Use the pre-filled demo data.");
+    } catch {
+      setError("Network error. Please try again.");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -139,9 +156,10 @@ export default function LoginPage() {
               </div>
               <button
                 type="submit"
+                disabled={loading}
                 className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-sm font-semibold rounded-xl px-4 py-2.5 hover:from-violet-700 hover:to-indigo-700 transition-all duration-200 shadow-md shadow-violet-500/25"
               >
-                Sign in
+                {loading ? "Signing in..." : "Sign in"}
               </button>
             </form>
           </div>
