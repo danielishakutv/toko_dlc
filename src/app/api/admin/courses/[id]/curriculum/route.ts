@@ -15,6 +15,7 @@ interface LessonInput {
   videoUrl?: string;
   duration?: string;
   body?: string;
+  quizUrl?: string;
   sortOrder: number;
 }
 
@@ -48,8 +49,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
         for (const lesson of sec.lessons || []) {
           await client.query(
-            "INSERT INTO lessons (section_id, title, video_url, duration, body, sort_order) VALUES ($1, $2, $3, $4, $5, $6)",
-            [secId, lesson.title, lesson.videoUrl || null, lesson.duration || null, lesson.body || null, lesson.sortOrder]
+            "INSERT INTO lessons (section_id, title, video_url, duration, body, quiz_url, sort_order) VALUES ($1, $2, $3, $4, $5, $6, $7)",
+            [secId, lesson.title, lesson.videoUrl || null, lesson.duration || null, lesson.body || null, lesson.quizUrl || null, lesson.sortOrder]
           );
         }
       }

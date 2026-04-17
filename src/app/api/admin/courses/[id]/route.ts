@@ -26,7 +26,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     const sections = [];
     for (const sec of sectionsRes.rows) {
       const lessonsRes = await pool.query(
-        `SELECT id, title, video_url, duration, body, sort_order FROM lessons WHERE section_id = $1 ORDER BY sort_order`,
+        `SELECT id, title, video_url, duration, body, quiz_url, sort_order FROM lessons WHERE section_id = $1 ORDER BY sort_order`,
         [sec.id]
       );
       sections.push({
@@ -39,6 +39,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
           videoUrl: l.video_url,
           duration: l.duration,
           body: l.body,
+          quizUrl: l.quiz_url,
           sortOrder: l.sort_order,
         })),
       });
