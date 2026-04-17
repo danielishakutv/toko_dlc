@@ -51,6 +51,11 @@ export default function StudentsPage() {
   const [roleFilter, setRoleFilter] = useState("");
   const [searchInput, setSearchInput] = useState("");
 
+  // CSV upload
+  const [showUpload, setShowUpload] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadResult, setUploadResult] = useState<{ created: number; skipped: number; failed: number; total: number; results: { email: string; status: string; error?: string }[] } | null>(null);
+
   const perPage = 20;
   const role = getUserRole();
 
@@ -189,6 +194,30 @@ export default function StudentsPage() {
     }
   }
 
+  async function handleCsvUpload(file: File) {
+    setUploading(true);
+    setUploadResult(null);
+    const token = getToken();
+    if (!token) { setUploading(false); return; }
+    const fd = new FormData();
+    fd.append("file", file);
+    try {
+      const res = await fetch("/api/admin/users/bulk", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: fd,
+      });
+      const data = await res.json();
+      if (!res.ok) { setError(data.error || "Upload failed"); setUploading(false); return; }
+      setUploadResult(data);
+      fetchStudents();
+    } catch {
+      setError("Network error");
+    } finally {
+      setUploading(false);
+    }
+  }
+
   if (role !== "superadmin") {
     return (
       <div>
@@ -207,18 +236,85 @@ export default function StudentsPage() {
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">Student Management</h1>
           <p className="text-sm text-gray-500">{total} user{total !== 1 ? "s" : ""} total</p>
         </div>
-        <button
-          onClick={openCreate}
-          className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-sm font-semibold rounded-xl px-4 py-2.5 hover:from-violet-700 hover:to-indigo-700 transition-all duration-200 shadow-md shadow-violet-500/25"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-          </svg>
-          Add User
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => { setShowUpload(!showUpload); setUploadResult(null); }}
+            className="inline-flex items-center justify-center gap-2 border border-violet-200 text-violet-700 bg-violet-50 text-sm font-semibold rounded-xl px-4 py-2.5 hover:bg-violet-100 transition-all duration-200"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+            </svg>
+            CSV Upload
+          </button>
+          <button
+            onClick={openCreate}
+            className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-sm font-semibold rounded-xl px-4 py-2.5 hover:from-violet-700 hover:to-indigo-700 transition-all duration-200 shadow-md shadow-violet-500/25"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            Add User
+          </button>
+        </div>
       </div>
 
       {error && <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2 mb-4">{error}</p>}
+
+      {/* CSV Upload Panel */}
+      {showUpload && (
+        <div className="bg-white/70 backdrop-blur-sm border border-white/60 shadow-sm rounded-2xl p-4 sm:p-5 mb-4">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-bold text-gray-900">Bulk Upload Students</h3>
+            <a href="/sample-students.csv" download className="text-xs text-violet-600 hover:text-violet-800 font-medium flex items-center gap-1">
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+              </svg>
+              Download Sample CSV
+            </a>
+          </div>
+          <p className="text-xs text-gray-500 mb-3">
+            Upload a CSV file with columns: <span className="font-mono text-gray-700">first_name, last_name, email, role</span>.
+            Role is optional (defaults to <span className="font-medium">student</span>). All users get password <span className="font-mono text-gray-700">Newuser1234</span> and must change it on first login.
+          </p>
+
+          <label className="flex flex-col items-center justify-center border-2 border-dashed border-gray-200 rounded-xl p-6 cursor-pointer hover:border-violet-300 hover:bg-violet-50/30 transition-all">
+            <svg className="w-8 h-8 text-gray-300 mb-2" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+            </svg>
+            <span className="text-sm text-gray-500">{uploading ? "Uploading..." : "Click to select CSV file"}</span>
+            <input
+              type="file"
+              accept=".csv"
+              className="hidden"
+              disabled={uploading}
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) handleCsvUpload(f);
+                e.target.value = "";
+              }}
+            />
+          </label>
+
+          {uploadResult && (
+            <div className="mt-4 border border-gray-100 rounded-xl p-4 bg-gray-50/50">
+              <div className="flex flex-wrap gap-3 mb-3">
+                <span className="text-xs font-medium bg-green-50 text-green-700 px-2.5 py-1 rounded-full">{uploadResult.created} created</span>
+                {uploadResult.skipped > 0 && <span className="text-xs font-medium bg-amber-50 text-amber-700 px-2.5 py-1 rounded-full">{uploadResult.skipped} skipped</span>}
+                {uploadResult.failed > 0 && <span className="text-xs font-medium bg-red-50 text-red-700 px-2.5 py-1 rounded-full">{uploadResult.failed} failed</span>}
+              </div>
+              {uploadResult.results.filter((r) => r.status !== "created").length > 0 && (
+                <div className="space-y-1 max-h-32 overflow-y-auto">
+                  {uploadResult.results.filter((r) => r.status !== "created").map((r, i) => (
+                    <p key={i} className="text-xs text-gray-500">
+                      <span className="font-mono">{r.email}</span> — <span className={r.status === "skipped" ? "text-amber-600" : "text-red-600"}>{r.error}</span>
+                    </p>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Search & Filter Bar */}
       <div className="bg-white/70 backdrop-blur-sm border border-white/60 shadow-sm rounded-2xl p-3 sm:p-4 mb-4">
@@ -523,7 +619,7 @@ export default function StudentsPage() {
               Reset password for <span className="font-medium">{resetting.firstName} {resetting.lastName}</span>?
             </p>
             <p className="text-xs text-gray-400 mb-6">
-              Password will be set to the default (<span className="font-mono">Toko@2022</span>). The user will be prompted to change it on next login.
+              Password will be set to the default (<span className="font-mono">Newuser1234</span>). The user will be prompted to change it on next login.
             </p>
             <div className="flex justify-end gap-3">
               <button

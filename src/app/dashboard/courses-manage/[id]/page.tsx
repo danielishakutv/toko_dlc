@@ -42,6 +42,16 @@ interface Enrollment {
   lastName: string;
   email: string;
   enrolledAt: string;
+  cohortId: string | null;
+  cohortName: string | null;
+}
+
+interface Cohort {
+  id: string;
+  name: string;
+  startDate: string | null;
+  endDate: string | null;
+  studentCount: number;
 }
 
 /* ── Main Page ───────────────────────────────────────── */
@@ -80,6 +90,15 @@ export default function CourseEditorPage({ params }: { params: Promise<{ id: str
   const [enrollSearch, setEnrollSearch] = useState("");
   const [showPicker, setShowPicker] = useState(false);
 
+  /* Cohort state */
+  const [cohorts, setCohorts] = useState<Cohort[]>([]);
+  const [cohortFilter, setCohortFilter] = useState("");
+  const [enrollCohortId, setEnrollCohortId] = useState("");
+  const [showCohortForm, setShowCohortForm] = useState(false);
+  const [cohortForm, setCohortForm] = useState({ name: "", startDate: "", endDate: "" });
+  const [cohortSaving, setCohortSaving] = useState(false);
+  const [editingCohort, setEditingCohort] = useState<Cohort | null>(null);
+
   /* Counts for tabs */
   const sectionCount = sections.length;
   const enrolledCount = enrollments.length;
@@ -90,10 +109,11 @@ export default function CourseEditorPage({ params }: { params: Promise<{ id: str
     const token = getToken();
     if (!token) { setError("Not authenticated"); setLoading(false); return; }
     try {
-      const [courseRes, enrollRes, availRes] = await Promise.all([
+      const [courseRes, enrollRes, availRes, cohortRes] = await Promise.all([
         fetch(`/api/admin/courses/${id}`, { headers: { Authorization: `Bearer ${token}` } }),
         fetch(`/api/admin/courses/${id}/enrollments`, { headers: { Authorization: `Bearer ${token}` } }),
         fetch(`/api/admin/courses/${id}/available-students`, { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`/api/admin/courses/${id}/cohorts`, { headers: { Authorization: `Bearer ${token}` } }),
       ]);
 
       if (!courseRes.ok) { setError("Course not found"); setLoading(false); return; }
@@ -127,6 +147,10 @@ export default function CourseEditorPage({ params }: { params: Promise<{ id: str
       if (availRes.ok) {
         const aData = await availRes.json();
         setAvailableStudents(aData.students || []);
+      }
+      if (cohortRes.ok) {
+        const cData = await cohortRes.json();
+        setCohorts(cData.cohorts || []);
       }
     } catch {
       setError("Network error");
@@ -271,15 +295,21 @@ export default function CourseEditorPage({ params }: { params: Promise<{ id: str
 
   /* ── Enrollment handlers ────────────────────────────── */
 
-  async function reloadEnrollments() {
+  async function reloadEnrollments(filterCohort?: string) {
     const token = getToken();
     if (!token) return;
-    const [enrollRes, availRes] = await Promise.all([
-      fetch(`/api/admin/courses/${id}/enrollments`, { headers: { Authorization: `Bearer ${token}` } }),
+    const cohortParam = filterCohort ?? cohortFilter;
+    const enrollUrl = cohortParam
+      ? `/api/admin/courses/${id}/enrollments?cohortId=${encodeURIComponent(cohortParam)}`
+      : `/api/admin/courses/${id}/enrollments`;
+    const [enrollRes, availRes, cohortRes] = await Promise.all([
+      fetch(enrollUrl, { headers: { Authorization: `Bearer ${token}` } }),
       fetch(`/api/admin/courses/${id}/available-students`, { headers: { Authorization: `Bearer ${token}` } }),
+      fetch(`/api/admin/courses/${id}/cohorts`, { headers: { Authorization: `Bearer ${token}` } }),
     ]);
     if (enrollRes.ok) { const d = await enrollRes.json(); setEnrollments(d.enrollments || []); }
     if (availRes.ok) { const d = await availRes.json(); setAvailableStudents(d.students || []); }
+    if (cohortRes.ok) { const d = await cohortRes.json(); setCohorts(d.cohorts || []); }
   }
 
   async function handleEnroll() {
@@ -291,7 +321,7 @@ export default function CourseEditorPage({ params }: { params: Promise<{ id: str
       const res = await fetch(`/api/admin/courses/${id}/enrollments`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ userIds: selectedIds }),
+        body: JSON.stringify({ userIds: selectedIds, cohortId: enrollCohortId || null }),
       });
       if (!res.ok) { const d = await res.json(); setError(d.error || "Enroll failed"); setEnrolling(false); return; }
       setSelectedIds([]); setShowPicker(false); setEnrollSearch("");
@@ -321,6 +351,70 @@ export default function CourseEditorPage({ params }: { params: Promise<{ id: str
   const filteredAvailable = availableStudents.filter(
     (s) => `${s.firstName} ${s.lastName}`.toLowerCase().includes(enrollSearch.toLowerCase()) || s.email.toLowerCase().includes(enrollSearch.toLowerCase())
   );
+
+  /* ── Cohort handlers ────────────────────────────────── */
+
+  async function handleSaveCohort() {
+    setCohortSaving(true); setError("");
+    const token = getToken();
+    if (!token) { setCohortSaving(false); return; }
+    try {
+      if (editingCohort) {
+        const res = await fetch(`/api/admin/cohorts/${editingCohort.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify(cohortForm),
+        });
+        if (!res.ok) { const d = await res.json(); setError(d.error || "Update failed"); setCohortSaving(false); return; }
+      } else {
+        const res = await fetch(`/api/admin/courses/${id}/cohorts`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify(cohortForm),
+        });
+        if (!res.ok) { const d = await res.json(); setError(d.error || "Create failed"); setCohortSaving(false); return; }
+      }
+      setShowCohortForm(false); setEditingCohort(null);
+      setCohortForm({ name: "", startDate: "", endDate: "" });
+      await reloadEnrollments();
+    } catch { setError("Network error"); } finally { setCohortSaving(false); }
+  }
+
+  async function handleDeleteCohort(cohortId: string) {
+    if (!confirm("Delete this cohort? Students will remain enrolled but become unassigned.")) return;
+    const token = getToken();
+    if (!token) return;
+    try {
+      await fetch(`/api/admin/cohorts/${cohortId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (cohortFilter === cohortId) setCohortFilter("");
+      await reloadEnrollments("");
+    } catch { setError("Network error"); }
+  }
+
+  function handleCohortFilterChange(val: string) {
+    setCohortFilter(val);
+    reloadEnrollments(val);
+  }
+
+  async function handleExport(format: string) {
+    const token = getToken();
+    if (!token) return;
+    const params = new URLSearchParams({ format });
+    if (cohortFilter) params.set("cohortId", cohortFilter);
+    const res = await fetch(`/api/admin/courses/${id}/enrollments/export?${params}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) return;
+    if (format === "csv") {
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a"); a.href = url; a.download = "enrollments.csv"; a.click();
+      URL.revokeObjectURL(url);
+    }
+  }
 
   /* ── Render ─────────────────────────────────────────── */
 
@@ -510,59 +604,144 @@ export default function CourseEditorPage({ params }: { params: Promise<{ id: str
 
       {/* ═══ ENROLLMENTS TAB ═══ */}
       {tab === "enrollments" && (
-        <div className="bg-white/70 backdrop-blur-sm border border-white/60 shadow-md rounded-2xl p-4 sm:p-6">
-          <div className="flex items-center justify-between mb-4">
-            <p className="text-sm text-gray-500">{enrolledCount} enrolled student{enrolledCount !== 1 ? "s" : ""}</p>
-            <button onClick={() => setShowPicker(!showPicker)} className="px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-violet-600 to-indigo-600 rounded-xl hover:from-violet-700 hover:to-indigo-700 transition-all shadow-md shadow-violet-500/25">
-              {showPicker ? "Cancel" : "Enroll Students"}
-            </button>
+        <div className="space-y-4">
+          {/* ── Cohort Management ── */}
+          <div className="bg-white/70 backdrop-blur-sm border border-white/60 shadow-md rounded-2xl p-4 sm:p-6">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-bold text-gray-900">Cohorts</h3>
+              <button
+                onClick={() => { setShowCohortForm(!showCohortForm); setEditingCohort(null); setCohortForm({ name: "", startDate: "", endDate: "" }); }}
+                className="text-xs font-semibold text-violet-600 hover:text-violet-800 transition-colors"
+              >
+                {showCohortForm ? "Cancel" : "+ New Cohort"}
+              </button>
+            </div>
+
+            {showCohortForm && (
+              <div className="border border-violet-200 rounded-xl p-4 mb-3 bg-violet-50/30">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">Name *</label>
+                    <input value={cohortForm.name} onChange={(e) => setCohortForm({ ...cohortForm, name: e.target.value })} placeholder="e.g. Cohort 1" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-violet-400 transition" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">Start Date</label>
+                    <input type="date" value={cohortForm.startDate} onChange={(e) => setCohortForm({ ...cohortForm, startDate: e.target.value })} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-violet-400 transition" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">End Date</label>
+                    <input type="date" value={cohortForm.endDate} onChange={(e) => setCohortForm({ ...cohortForm, endDate: e.target.value })} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-violet-400 transition" />
+                  </div>
+                </div>
+                <button onClick={handleSaveCohort} disabled={cohortSaving || !cohortForm.name.trim()} className="px-4 py-1.5 text-sm font-semibold text-white bg-gradient-to-r from-violet-600 to-indigo-600 rounded-lg hover:from-violet-700 hover:to-indigo-700 transition-all shadow-sm disabled:opacity-60">
+                  {cohortSaving ? "Saving..." : editingCohort ? "Update Cohort" : "Create Cohort"}
+                </button>
+              </div>
+            )}
+
+            {cohorts.length === 0 ? (
+              <p className="text-xs text-gray-400">No cohorts yet. Create one to organize students by intake.</p>
+            ) : (
+              <div className="space-y-1.5">
+                {cohorts.map((c) => (
+                  <div key={c.id} className="flex items-center justify-between px-3 py-2 rounded-lg bg-white/50 border border-gray-100 text-sm">
+                    <div className="flex items-center gap-3">
+                      <span className="font-medium text-gray-900">{c.name}</span>
+                      <span className="text-xs text-gray-400">{c.studentCount} student{c.studentCount !== 1 ? "s" : ""}</span>
+                      {c.startDate && <span className="text-xs text-gray-400">{new Date(c.startDate).toLocaleDateString()}{c.endDate ? ` – ${new Date(c.endDate).toLocaleDateString()}` : ""}</span>}
+                    </div>
+                    <div className="flex gap-2">
+                      <button onClick={() => { setEditingCohort(c); setCohortForm({ name: c.name, startDate: c.startDate || "", endDate: c.endDate || "" }); setShowCohortForm(true); }} className="text-xs text-gray-500 hover:text-gray-900 transition-colors">Edit</button>
+                      <button onClick={() => handleDeleteCohort(c.id)} className="text-xs text-red-500 hover:text-red-700 transition-colors">Delete</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
-          {showPicker && (
-            <div className="border border-violet-200 rounded-xl p-4 mb-4 bg-violet-50/30">
-              <input value={enrollSearch} onChange={(e) => setEnrollSearch(e.target.value)} placeholder="Search available students..." className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-violet-400 transition mb-3" />
-              {filteredAvailable.length === 0 ? (
-                <p className="text-sm text-gray-400 text-center py-4">No available students found</p>
-              ) : (
-                <div className="max-h-48 overflow-y-auto space-y-1">
-                  {filteredAvailable.map((s) => (
-                    <label key={s.id} className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/60 cursor-pointer text-sm">
-                      <input type="checkbox" checked={selectedIds.includes(s.id)} onChange={() => toggleStudent(s.id)} className="rounded accent-violet-600" />
-                      <span className="font-medium text-gray-900">{s.firstName} {s.lastName}</span>
-                      <span className="text-gray-400">{s.email}</span>
-                    </label>
-                  ))}
-                </div>
-              )}
-              {selectedIds.length > 0 && (
-                <div className="mt-3 pt-3 border-t border-violet-200 flex items-center justify-between">
-                  <span className="text-xs text-gray-500">{selectedIds.length} selected</span>
-                  <button onClick={handleEnroll} disabled={enrolling} className="px-4 py-1.5 text-sm font-semibold text-white bg-gradient-to-r from-violet-600 to-indigo-600 rounded-lg hover:from-violet-700 hover:to-indigo-700 transition-all shadow-sm">
-                    {enrolling ? "Enrolling..." : `Enroll ${selectedIds.length}`}
+          {/* ── Enrollment List ── */}
+          <div className="bg-white/70 backdrop-blur-sm border border-white/60 shadow-md rounded-2xl p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+              <div className="flex items-center gap-3">
+                <p className="text-sm text-gray-500">{enrollments.length} enrolled student{enrollments.length !== 1 ? "s" : ""}</p>
+                {/* Cohort filter */}
+                {cohorts.length > 0 && (
+                  <select value={cohortFilter} onChange={(e) => handleCohortFilterChange(e.target.value)} className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 outline-none focus:border-violet-400 transition bg-white">
+                    <option value="">All Cohorts</option>
+                    {cohorts.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    <option value="none">Unassigned</option>
+                  </select>
+                )}
+              </div>
+              <div className="flex gap-2">
+                {enrollments.length > 0 && (
+                  <button onClick={() => handleExport("csv")} className="px-3 py-2 text-xs font-medium border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors flex items-center gap-1.5">
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>
+                    Export CSV
                   </button>
-                </div>
-              )}
+                )}
+                <button onClick={() => setShowPicker(!showPicker)} className="px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-violet-600 to-indigo-600 rounded-xl hover:from-violet-700 hover:to-indigo-700 transition-all shadow-md shadow-violet-500/25">
+                  {showPicker ? "Cancel" : "Enroll Students"}
+                </button>
+              </div>
             </div>
-          )}
 
-          {enrollments.length === 0 ? (
-            <p className="text-center py-8 text-gray-400">No students enrolled yet</p>
-          ) : (
-            <div className="space-y-2">
-              {enrollments.map((e) => (
-                <div key={e.enrollmentId} className="flex items-center justify-between px-4 py-3 rounded-xl bg-white/50 border border-gray-100">
-                  <div>
-                    <span className="text-sm font-medium text-gray-900">{e.firstName} {e.lastName}</span>
-                    <span className="text-sm text-gray-400 ml-2">{e.email}</span>
-                    <span className="text-xs text-gray-400 ml-3">Enrolled {new Date(e.enrolledAt).toLocaleDateString()}</span>
-                  </div>
-                  <button onClick={() => handleUnenroll(e.userId)} className="text-xs text-red-500 hover:text-red-700 font-medium">
-                    Remove
-                  </button>
+            {showPicker && (
+              <div className="border border-violet-200 rounded-xl p-4 mb-4 bg-violet-50/30">
+                <div className="flex flex-col sm:flex-row gap-3 mb-3">
+                  <input value={enrollSearch} onChange={(e) => setEnrollSearch(e.target.value)} placeholder="Search available students..." className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-violet-400 transition" />
+                  {cohorts.length > 0 && (
+                    <select value={enrollCohortId} onChange={(e) => setEnrollCohortId(e.target.value)} className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-violet-400 transition bg-white sm:w-48">
+                      <option value="">No cohort</option>
+                      {cohorts.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    </select>
+                  )}
                 </div>
-              ))}
-            </div>
-          )}
+                {filteredAvailable.length === 0 ? (
+                  <p className="text-sm text-gray-400 text-center py-4">No available students found</p>
+                ) : (
+                  <div className="max-h-48 overflow-y-auto space-y-1">
+                    {filteredAvailable.map((s) => (
+                      <label key={s.id} className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/60 cursor-pointer text-sm">
+                        <input type="checkbox" checked={selectedIds.includes(s.id)} onChange={() => toggleStudent(s.id)} className="rounded accent-violet-600" />
+                        <span className="font-medium text-gray-900">{s.firstName} {s.lastName}</span>
+                        <span className="text-gray-400">{s.email}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+                {selectedIds.length > 0 && (
+                  <div className="mt-3 pt-3 border-t border-violet-200 flex items-center justify-between">
+                    <span className="text-xs text-gray-500">{selectedIds.length} selected{enrollCohortId ? ` → ${cohorts.find((c) => c.id === enrollCohortId)?.name}` : ""}</span>
+                    <button onClick={handleEnroll} disabled={enrolling} className="px-4 py-1.5 text-sm font-semibold text-white bg-gradient-to-r from-violet-600 to-indigo-600 rounded-lg hover:from-violet-700 hover:to-indigo-700 transition-all shadow-sm">
+                      {enrolling ? "Enrolling..." : `Enroll ${selectedIds.length}`}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {enrollments.length === 0 ? (
+              <p className="text-center py-8 text-gray-400">No students enrolled{cohortFilter ? " in this cohort" : " yet"}</p>
+            ) : (
+              <div className="space-y-2">
+                {enrollments.map((e) => (
+                  <div key={e.enrollmentId} className="flex items-center justify-between px-4 py-3 rounded-xl bg-white/50 border border-gray-100">
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                      <span className="text-sm font-medium text-gray-900">{e.firstName} {e.lastName}</span>
+                      <span className="text-sm text-gray-400">{e.email}</span>
+                      {e.cohortName && <span className="text-xs font-medium bg-violet-50 text-violet-700 px-2 py-0.5 rounded-full">{e.cohortName}</span>}
+                      <span className="text-xs text-gray-400">Enrolled {new Date(e.enrolledAt).toLocaleDateString()}</span>
+                    </div>
+                    <button onClick={() => handleUnenroll(e.userId)} className="text-xs text-red-500 hover:text-red-700 font-medium shrink-0">
+                      Remove
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

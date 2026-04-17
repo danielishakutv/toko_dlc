@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import pool from "@/lib/db";
 import { requireRole, unauthorized, forbidden, notFound, badRequest, serverError } from "@/lib/auth";
 
-const DEFAULT_PASSWORD = "Toko@2022";
+const DEFAULT_PASSWORD = "Newuser1234";
 
 export async function POST(
   req: NextRequest,

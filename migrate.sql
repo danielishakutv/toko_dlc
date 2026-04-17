@@ -228,3 +228,19 @@ INSERT INTO feature_flags (key, enabled) VALUES
   ('certificates', true),
   ('support', true)
 ON CONFLICT (key) DO NOTHING;
+
+-- cohorts (for grouping enrollments by intake/batch)
+CREATE TABLE IF NOT EXISTS cohorts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  course_id UUID NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+  name VARCHAR(255) NOT NULL,
+  start_date DATE,
+  end_date DATE,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  UNIQUE(course_id, name)
+);
+
+-- Add cohort_id column to enrollments if it doesn't exist
+DO $$ BEGIN
+  ALTER TABLE enrollments ADD COLUMN cohort_id UUID REFERENCES cohorts(id) ON DELETE SET NULL;
+EXCEPTION WHEN duplicate_column THEN null; END $$;
