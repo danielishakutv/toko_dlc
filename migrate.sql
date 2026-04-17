@@ -51,12 +51,18 @@ DO $$ BEGIN
   ALTER TABLE users ADD COLUMN must_change_password BOOLEAN NOT NULL DEFAULT true;
 EXCEPTION WHEN duplicate_column THEN null; END $$;
 
+-- Add thumbnail_url column if it doesn't exist (for existing databases)
+DO $$ BEGIN
+  ALTER TABLE courses ADD COLUMN thumbnail_url TEXT;
+EXCEPTION WHEN duplicate_column THEN null; END $$;
+
 -- courses
 CREATE TABLE IF NOT EXISTS courses (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   slug VARCHAR(255) NOT NULL UNIQUE,
   title VARCHAR(255) NOT NULL,
   icon VARCHAR(50) NOT NULL,
+  thumbnail_url TEXT,
   description TEXT NOT NULL,
   about TEXT NOT NULL,
   price DECIMAL(10,2) NOT NULL DEFAULT 0,

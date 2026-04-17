@@ -158,6 +158,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <MenuIcon name="users" />
               Students
             </Link>
+            <Link
+              href="/dashboard/courses-manage"
+              onClick={() => setSidebarOpen(false)}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+                pathname === "/dashboard/courses-manage"
+                  ? "bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-500/25"
+                  : "text-gray-600 hover:bg-white/60 hover:text-gray-900"
+              }`}
+            >
+              <MenuIcon name="book" />
+              Courses
+            </Link>
           </>
         )}
       </nav>

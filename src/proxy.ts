@@ -46,6 +46,9 @@ export async function proxy(req: NextRequest) {
     if (pathname.startsWith("/dashboard/students") && payload.role !== "superadmin") {
       return NextResponse.redirect(new URL("/dashboard", req.url));
     }
+    if (pathname.startsWith("/dashboard/courses-manage") && payload.role !== "superadmin") {
+      return NextResponse.redirect(new URL("/dashboard", req.url));
+    }
 
     return NextResponse.next();
   } catch {
