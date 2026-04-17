@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, use } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
 function getToken() {
@@ -49,8 +49,12 @@ interface Enrollment {
 export default function CourseEditorPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialTab = (["details", "curriculum", "enrollments"] as const).includes(searchParams.get("tab") as "details" | "curriculum" | "enrollments")
+    ? (searchParams.get("tab") as "details" | "curriculum" | "enrollments")
+    : "details";
 
-  const [tab, setTab] = useState<"details" | "curriculum" | "enrollments">("details");
+  const [tab, setTab] = useState<"details" | "curriculum" | "enrollments">(initialTab);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 

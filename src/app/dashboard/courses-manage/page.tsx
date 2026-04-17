@@ -46,6 +46,7 @@ export default function CoursesManagePage() {
   const [searchInput, setSearchInput] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
 
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<Course | null>(null);
 
   const perPage = 20;
@@ -88,6 +89,7 @@ export default function CoursesManagePage() {
         headers: { Authorization: `Bearer ${token}` },
       });
       setDeleting(null);
+      setExpandedId(null);
       fetchCourses();
     } catch {
       setDeleting(null);
@@ -108,174 +110,127 @@ export default function CoursesManagePage() {
   return (
     <div>
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      <div className="flex items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">Course Management</h1>
-          <p className="text-sm text-gray-500">{total} course{total !== 1 ? "s" : ""} total</p>
+          <p className="text-sm text-gray-500">{total} course{total !== 1 ? "s" : ""}</p>
         </div>
         <Link
           href="/dashboard/courses-manage/new"
-          className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-sm font-semibold rounded-xl px-4 py-2.5 hover:from-violet-700 hover:to-indigo-700 transition-all duration-200 shadow-md shadow-violet-500/25"
+          className="inline-flex items-center gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-sm font-semibold rounded-xl px-4 py-2.5 hover:from-violet-700 hover:to-indigo-700 transition-all shadow-md shadow-violet-500/25 shrink-0"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-          </svg>
-          Add Course
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+          <span className="hidden sm:inline">Add Course</span>
         </Link>
       </div>
 
       {error && <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2 mb-4">{error}</p>}
 
       {/* Search & Filter */}
-      <div className="bg-white/70 backdrop-blur-sm border border-white/60 shadow-sm rounded-2xl p-3 sm:p-4 mb-4">
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="flex-1 relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-              </svg>
-            </div>
-            <input
-              type="text"
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") { setSearch(searchInput); setPage(1); } }}
-              placeholder="Search courses..."
-              className="w-full pl-10 pr-10 py-2.5 text-sm border border-gray-200 rounded-xl outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition-all placeholder:text-gray-400"
-            />
-            {searchInput && (
-              <button onClick={() => { setSearchInput(""); setSearch(""); setPage(1); }} className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-              </button>
-            )}
+      <div className="flex flex-col sm:flex-row gap-3 mb-4">
+        <div className="flex-1 relative">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
           </div>
-          <div className="flex gap-3">
-            <div className="relative flex-1 sm:flex-none">
-              <select
-                value={statusFilter}
-                onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-                className="w-full sm:w-40 appearance-none pl-3 pr-9 py-2.5 text-sm border border-gray-200 rounded-xl outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition-all bg-white"
-              >
-                <option value="">All Status</option>
-                <option value="published">Published</option>
-                <option value="draft">Draft</option>
-              </select>
-              <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
-              </div>
-            </div>
-            <button
-              onClick={() => { setSearch(searchInput); setPage(1); }}
-              className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-sm font-semibold rounded-xl px-4 py-2.5 hover:from-violet-700 hover:to-indigo-700 transition-all duration-200 shadow-md shadow-violet-500/25 shrink-0"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
-              <span className="hidden sm:inline">Search</span>
-            </button>
-          </div>
+          <input
+            type="text"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") { setSearch(searchInput); setPage(1); } }}
+            placeholder="Search courses..."
+            className="w-full pl-10 pr-3 py-2.5 text-sm border border-gray-200 rounded-xl outline-none focus:border-violet-400 transition-all placeholder:text-gray-400"
+          />
         </div>
+        <select
+          value={statusFilter}
+          onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
+          className="w-full sm:w-36 px-3 py-2.5 text-sm border border-gray-200 rounded-xl outline-none focus:border-violet-400 transition-all bg-white"
+        >
+          <option value="">All Status</option>
+          <option value="published">Published</option>
+          <option value="draft">Draft</option>
+        </select>
+        <button
+          onClick={() => { setSearch(searchInput); setPage(1); }}
+          className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-sm font-semibold rounded-xl px-4 py-2.5 hover:from-violet-700 hover:to-indigo-700 transition-all shadow-md shadow-violet-500/25 shrink-0"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
+          Search
+        </button>
       </div>
 
       {/* Course List */}
-      <div className="bg-white/70 backdrop-blur-sm border border-white/60 shadow-md rounded-2xl overflow-hidden">
-        {loading ? (
-          <div className="p-8 text-center text-gray-400">Loading...</div>
-        ) : courses.length === 0 ? (
-          <div className="p-8 text-center text-gray-400">No courses found</div>
-        ) : (
-          <>
-            {/* Desktop table */}
-            <div className="hidden md:block overflow-x-auto">
-              <table className="w-full text-sm text-left">
-                <thead>
-                  <tr className="border-b border-gray-200 text-gray-500">
-                    <th className="px-6 py-3 font-medium">Course</th>
-                    <th className="px-6 py-3 font-medium">Status</th>
-                    <th className="px-6 py-3 font-medium">Students</th>
-                    <th className="px-6 py-3 font-medium">Sections</th>
-                    <th className="px-6 py-3 font-medium">Price</th>
-                    <th className="px-6 py-3 font-medium text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {courses.map((c) => (
-                    <tr key={c.id}>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          {c.thumbnailUrl ? (
-                            <img src={c.thumbnailUrl} alt="" className="w-10 h-10 rounded-lg object-cover shrink-0" />
-                          ) : (
-                            <div className="w-10 h-10 rounded-lg bg-violet-50 flex items-center justify-center shrink-0">
-                              <svg className="w-5 h-5 text-violet-600" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.331 0 4.472.89 6.042 2.346m0-14.304a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.346" />
-                              </svg>
-                            </div>
-                          )}
-                          <div className="min-w-0">
-                            <p className="font-medium text-gray-900 truncate">{c.title}</p>
-                            <p className="text-xs text-gray-400 truncate">{c.slug}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`text-xs font-medium rounded-full px-2.5 py-1 ${c.published ? "bg-green-50 text-green-600" : "bg-gray-100 text-gray-500"}`}>
-                          {c.published ? "Published" : "Draft"}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-gray-600">{c.enrolledCount}</td>
-                      <td className="px-6 py-4 text-gray-600">{c.sectionCount}</td>
-                      <td className="px-6 py-4 text-gray-600">{c.price > 0 ? `$${c.price}` : "Free"}</td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="inline-flex gap-2">
-                          <Link href={`/dashboard/courses-manage/${c.id}`} className="text-xs text-gray-500 hover:text-gray-900 transition-colors px-2 py-1 rounded hover:bg-gray-100">Edit</Link>
-                          <Link href={`/dashboard/courses-manage/${c.id}/curriculum`} className="text-xs text-violet-600 hover:text-violet-900 transition-colors px-2 py-1 rounded hover:bg-violet-50">Curriculum</Link>
-                          <Link href={`/dashboard/courses-manage/${c.id}/enrollments`} className="text-xs text-blue-600 hover:text-blue-700 transition-colors px-2 py-1 rounded hover:bg-blue-50">Enrollments</Link>
-                          <button onClick={() => setDeleting(c)} className="text-xs text-red-500 hover:text-red-700 transition-colors px-2 py-1 rounded hover:bg-red-50">Delete</button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Mobile cards */}
-            <div className="md:hidden divide-y divide-gray-100">
-              {courses.map((c) => (
-                <div key={c.id} className="p-4 space-y-3">
-                  <div className="flex items-start gap-3">
-                    {c.thumbnailUrl ? (
-                      <img src={c.thumbnailUrl} alt="" className="w-12 h-12 rounded-lg object-cover shrink-0" />
-                    ) : (
-                      <div className="w-12 h-12 rounded-lg bg-violet-50 flex items-center justify-center shrink-0">
-                        <svg className="w-6 h-6 text-violet-600" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.331 0 4.472.89 6.042 2.346m0-14.304a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.346" />
-                        </svg>
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-gray-900 truncate">{c.title}</p>
-                      <p className="text-xs text-gray-400 truncate">{c.slug}</p>
-                      <div className="flex items-center gap-3 mt-1.5">
-                        <span className={`text-xs font-medium rounded-full px-2 py-0.5 ${c.published ? "bg-green-50 text-green-600" : "bg-gray-100 text-gray-500"}`}>
-                          {c.published ? "Published" : "Draft"}
-                        </span>
-                        <span className="text-xs text-gray-400">{c.enrolledCount} students</span>
-                        <span className="text-xs text-gray-400">{c.sectionCount} sections</span>
-                      </div>
+      {loading ? (
+        <div className="p-8 text-center text-gray-400">Loading...</div>
+      ) : courses.length === 0 ? (
+        <div className="p-8 text-center text-gray-400">No courses found</div>
+      ) : (
+        <div className="space-y-3">
+          {courses.map((c) => {
+            const isOpen = expandedId === c.id;
+            return (
+              <div key={c.id} className="bg-white/70 backdrop-blur-sm border border-white/60 shadow-md rounded-2xl overflow-hidden">
+                {/* Row header — always visible, click to expand */}
+                <button
+                  onClick={() => setExpandedId(isOpen ? null : c.id)}
+                  className="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-gray-50/50 transition-colors"
+                >
+                  {c.thumbnailUrl ? (
+                    <img src={c.thumbnailUrl} alt="" className="w-10 h-10 rounded-lg object-cover shrink-0" />
+                  ) : (
+                    <div className="w-10 h-10 rounded-lg bg-violet-50 flex items-center justify-center shrink-0">
+                      <svg className="w-5 h-5 text-violet-600" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.331 0 4.472.89 6.042 2.346m0-14.304a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.346" /></svg>
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-gray-900 truncate">{c.title}</p>
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-0.5">
+                      <span className={`text-xs font-medium rounded-full px-2 py-0.5 ${c.published ? "bg-green-50 text-green-600" : "bg-gray-100 text-gray-500"}`}>
+                        {c.published ? "Published" : "Draft"}
+                      </span>
+                      <span className="text-xs text-gray-400">{c.enrolledCount} students</span>
+                      <span className="text-xs text-gray-400">{c.sectionCount} sections</span>
+                      <span className="text-xs text-gray-400">{c.price > 0 ? `$${c.price.toLocaleString()}` : "Free"}</span>
                     </div>
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    <Link href={`/dashboard/courses-manage/${c.id}`} className="text-xs font-medium text-violet-600 bg-violet-50 px-3 py-1.5 rounded-lg transition-colors">Edit</Link>
-                    <Link href={`/dashboard/courses-manage/${c.id}/curriculum`} className="text-xs font-medium text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-lg transition-colors">Curriculum</Link>
-                    <Link href={`/dashboard/courses-manage/${c.id}/enrollments`} className="text-xs font-medium text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg transition-colors">Enrollments</Link>
-                    <button onClick={() => setDeleting(c)} className="text-xs font-medium text-red-600 bg-red-50 px-3 py-1.5 rounded-lg transition-colors">Delete</button>
+                  <svg className={`w-5 h-5 text-gray-400 shrink-0 transition-transform ${isOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
+                </button>
+
+                {/* Expanded details */}
+                {isOpen && (
+                  <div className="border-t border-gray-100 px-4 py-4 space-y-3">
+                    {c.description && (
+                      <p className="text-sm text-gray-600">{c.description}</p>
+                    )}
+                    <div className="flex flex-wrap gap-x-6 gap-y-1 text-xs text-gray-500">
+                      <span>Slug: <span className="text-gray-700">{c.slug}</span></span>
+                      <span>Hours: <span className="text-gray-700">{c.hours}</span></span>
+                      <span>Quizzes: <span className="text-gray-700">{c.quizzes}</span></span>
+                      <span>Certificate: <span className="text-gray-700">{c.hasCertificate ? "Yes" : "No"}</span></span>
+                    </div>
+
+                    {/* Action buttons */}
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      <Link href={`/dashboard/courses-manage/${c.id}`} className="text-xs font-medium text-white bg-gradient-to-r from-violet-600 to-indigo-600 px-3 py-1.5 rounded-lg hover:from-violet-700 hover:to-indigo-700 transition-all">
+                        Edit Details
+                      </Link>
+                      <Link href={`/dashboard/courses-manage/${c.id}?tab=curriculum`} className="text-xs font-medium text-violet-700 bg-violet-50 px-3 py-1.5 rounded-lg hover:bg-violet-100 transition-colors">
+                        Curriculum ({c.sectionCount})
+                      </Link>
+                      <Link href={`/dashboard/courses-manage/${c.id}?tab=enrollments`} className="text-xs font-medium text-blue-700 bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-colors">
+                        Enrollments ({c.enrolledCount})
+                      </Link>
+                      <button onClick={(e) => { e.stopPropagation(); setDeleting(c); }} className="text-xs font-medium text-red-600 bg-red-50 px-3 py-1.5 rounded-lg hover:bg-red-100 transition-colors">
+                        Delete
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
-      </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Pagination */}
       {totalPages > 1 && (
