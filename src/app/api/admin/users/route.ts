@@ -12,14 +12,33 @@ export async function GET(req: NextRequest) {
     const page = Math.max(1, parseInt(url.searchParams.get("page") ?? "1"));
     const perPage = Math.min(100, Math.max(1, parseInt(url.searchParams.get("perPage") ?? "20")));
     const offset = (page - 1) * perPage;
+    const search = url.searchParams.get("search")?.trim() ?? "";
+    const roleFilter = url.searchParams.get("role")?.trim() ?? "";
+
+    const conditions: string[] = [];
+    const params: (string | number)[] = [];
+    let paramIdx = 1;
+
+    if (search) {
+      conditions.push(`(first_name ILIKE $${paramIdx} OR last_name ILIKE $${paramIdx} OR email ILIKE $${paramIdx})`);
+      params.push(`%${search}%`);
+      paramIdx++;
+    }
+    if (roleFilter && ["student", "admin", "superadmin"].includes(roleFilter)) {
+      conditions.push(`role = $${paramIdx}`);
+      params.push(roleFilter);
+      paramIdx++;
+    }
+
+    const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
 
     const [usersRes, countRes] = await Promise.all([
       pool.query(
         `SELECT id, first_name, last_name, email, role, created_at
-        FROM users ORDER BY created_at DESC LIMIT $1 OFFSET $2`,
-        [perPage, offset]
+        FROM users ${where} ORDER BY created_at DESC LIMIT $${paramIdx} OFFSET $${paramIdx + 1}`,
+        [...params, perPage, offset]
       ),
-      pool.query("SELECT COUNT(*)::int AS total FROM users"),
+      pool.query(`SELECT COUNT(*)::int AS total FROM users ${where}`, params),
     ]);
 
     return NextResponse.json({
