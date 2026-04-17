@@ -9,15 +9,17 @@ function getToken() {
 
 interface Student {
   id: number;
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
 }
 
 interface Enrollment {
-  id: number;
+  enrollmentId: number;
   userId: number;
-  userName: string;
-  userEmail: string;
+  firstName: string;
+  lastName: string;
+  email: string;
   enrolledAt: string;
 }
 
@@ -48,11 +50,11 @@ export default function EnrollmentsPage({ params }: { params: Promise<{ id: stri
       }
       if (enrollRes.ok) {
         const data = await enrollRes.json();
-        setEnrollments(data);
+        setEnrollments(data.enrollments || []);
       }
       if (availRes.ok) {
         const data = await availRes.json();
-        setAvailableStudents(data);
+        setAvailableStudents(data.students || []);
       }
     } catch {
       setError("Network error");
@@ -118,7 +120,7 @@ export default function EnrollmentsPage({ params }: { params: Promise<{ id: stri
   }
 
   const filteredAvailable = availableStudents.filter(
-    (s) => s.name.toLowerCase().includes(searchTerm.toLowerCase()) || s.email.toLowerCase().includes(searchTerm.toLowerCase())
+    (s) => `${s.firstName} ${s.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) || s.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (loading) {
@@ -170,7 +172,7 @@ export default function EnrollmentsPage({ params }: { params: Promise<{ id: stri
                 {filteredAvailable.map((s) => (
                   <label key={s.id} className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/60 cursor-pointer text-sm">
                     <input type="checkbox" checked={selectedIds.includes(s.id)} onChange={() => toggleStudent(s.id)} className="rounded accent-violet-600" />
-                    <span className="font-medium text-gray-900">{s.name}</span>
+                    <span className="font-medium text-gray-900">{s.firstName} {s.lastName}</span>
                     <span className="text-gray-400">{s.email}</span>
                   </label>
                 ))}
@@ -193,10 +195,10 @@ export default function EnrollmentsPage({ params }: { params: Promise<{ id: stri
         ) : (
           <div className="space-y-2">
             {enrollments.map((e) => (
-              <div key={e.id} className="flex items-center justify-between px-4 py-3 rounded-xl bg-white/50 border border-gray-100">
+              <div key={e.enrollmentId} className="flex items-center justify-between px-4 py-3 rounded-xl bg-white/50 border border-gray-100">
                 <div>
-                  <span className="text-sm font-medium text-gray-900">{e.userName}</span>
-                  <span className="text-sm text-gray-400 ml-2">{e.userEmail}</span>
+                  <span className="text-sm font-medium text-gray-900">{e.firstName} {e.lastName}</span>
+                  <span className="text-sm text-gray-400 ml-2">{e.email}</span>
                   <span className="text-xs text-gray-400 ml-3">Enrolled {new Date(e.enrolledAt).toLocaleDateString()}</span>
                 </div>
                 <button onClick={() => handleUnenroll(e.userId)} className="text-xs text-red-500 hover:text-red-700 font-medium">
