@@ -2,6 +2,10 @@
 
 import { useState } from "react";
 
+function getToken() {
+  return typeof window !== "undefined" ? localStorage.getItem("token") : null;
+}
+
 const faqs = [
   {
     q: "How do I reset my password?",
@@ -29,12 +33,30 @@ export default function SupportPage() {
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState("");
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setSubmitted(true);
-    setSubject("");
-    setMessage("");
+    setSending(true);
+    setError("");
+    const token = getToken();
+    try {
+      const res = await fetch("/api/support", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ subject, message }),
+      });
+      if (res.ok) {
+        setSubmitted(true);
+        setSubject("");
+        setMessage("");
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error || "Failed to send message");
+      }
+    } catch { setError("Network error"); }
+    setSending(false);
   }
 
   return (
@@ -102,10 +124,12 @@ export default function SupportPage() {
                 </div>
                 <button
                   type="submit"
-                    className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-sm font-semibold rounded-xl px-4 py-2.5 hover:from-violet-700 hover:to-indigo-700 transition-all duration-200 shadow-md shadow-violet-500/25"
+                  disabled={sending}
+                    className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-sm font-semibold rounded-xl px-4 py-2.5 hover:from-violet-700 hover:to-indigo-700 transition-all duration-200 shadow-md shadow-violet-500/25 disabled:opacity-50"
                 >
-                  Send Message
+                  {sending ? "Sending..." : "Send Message"}
                 </button>
+                {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
               </form>
             )}
           </div>
