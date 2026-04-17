@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import features from "@/app/lib/features";
@@ -64,6 +64,12 @@ function MenuIcon({ name, className }: { name: string; className?: string }) {
           <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
         </svg>
       );
+    case "users":
+      return (
+        <svg className={cn} fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />
+        </svg>
+      );
     default:
       return null;
   }
@@ -73,8 +79,29 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const pathname = usePathname();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [userRole, setUserRole] = useState("");
+  const [userName, setUserName] = useState({ first: "", last: "", initials: "TL" });
+
+  useEffect(() => {
+    try {
+      const u = localStorage.getItem("user");
+      if (u) {
+        const parsed = JSON.parse(u);
+        setUserRole(parsed.role || "");
+        const first = parsed.firstName || "";
+        const last = parsed.lastName || "";
+        setUserName({
+          first,
+          last,
+          initials: (first[0] || "T") + (last[0] || "L"),
+        });
+      }
+    } catch { /* ignore */ }
+  }, []);
 
   function handleLogout() {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
     router.push("/");
   }
 
@@ -105,6 +132,27 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </Link>
           );
         })}
+
+        {/* Admin section */}
+        {userRole === "superadmin" && (
+          <>
+            <div className="pt-4 pb-1 px-3">
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Admin</p>
+            </div>
+            <Link
+              href="/dashboard/students"
+              onClick={() => setSidebarOpen(false)}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+                pathname === "/dashboard/students"
+                  ? "bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-500/25"
+                  : "text-gray-600 hover:bg-white/60 hover:text-gray-900"
+              }`}
+            >
+              <MenuIcon name="users" />
+              Students
+            </Link>
+          </>
+        )}
       </nav>
 
       {/* Profile + Logout */}
@@ -115,11 +163,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           className="flex items-center gap-3 mb-4 rounded-lg px-1 py-1 -mx-1 hover:bg-gray-100 transition-colors"
         >
           <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center shrink-0">
-            <span className="text-sm font-bold text-gray-500">TL</span>
+            <span className="text-sm font-bold text-gray-500">{userName.initials}</span>
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-gray-900 truncate">Toko Learner</p>
-            <p className="text-xs text-gray-500">Student</p>
+            <p className="text-sm font-semibold text-gray-900 truncate">{userName.first} {userName.last}</p>
+            <p className="text-xs text-gray-500 capitalize">{userRole || "Student"}</p>
           </div>
         </Link>
         <button
