@@ -194,14 +194,14 @@ export default function StudentsPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-1">Student Management</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">Student Management</h1>
           <p className="text-sm text-gray-500">{total} user{total !== 1 ? "s" : ""} total</p>
         </div>
         <button
           onClick={openCreate}
-          className="inline-flex items-center gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-sm font-semibold rounded-xl px-4 py-2.5 hover:from-violet-700 hover:to-indigo-700 transition-all duration-200 shadow-md shadow-violet-500/25"
+          className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-sm font-semibold rounded-xl px-4 py-2.5 hover:from-violet-700 hover:to-indigo-700 transition-all duration-200 shadow-md shadow-violet-500/25"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -277,9 +277,9 @@ export default function StudentsPage() {
             {/* Mobile cards */}
             <div className="md:hidden divide-y divide-gray-100">
               {students.map((s) => (
-                <div key={s.id} className="p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-sm font-medium text-gray-900">{s.firstName} {s.lastName}</p>
+                <div key={s.id} className="p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-semibold text-gray-900">{s.firstName} {s.lastName}</p>
                     <span className={`text-xs font-medium rounded-full px-2.5 py-1 ${
                       s.role === "superadmin" ? "bg-purple-50 text-purple-700"
                       : s.role === "admin" ? "bg-blue-50 text-blue-700"
@@ -288,14 +288,14 @@ export default function StudentsPage() {
                       {s.role}
                     </span>
                   </div>
-                  <p className="text-xs text-gray-500 mb-2">{s.email}</p>
-                  <div className="flex gap-2">
-                    <button onClick={() => openEdit(s)} className="text-xs text-gray-500 hover:text-gray-900">Edit</button>
+                  <p className="text-xs text-gray-500">{s.email}</p>
+                  <div className="flex flex-wrap gap-2">
+                    <button onClick={() => openEdit(s)} className="text-xs font-medium text-violet-600 bg-violet-50 px-3 py-1.5 rounded-lg transition-colors">Edit</button>
                     {s.role !== "superadmin" && (
-                      <button onClick={() => setResetting(s)} className="text-xs text-amber-600 hover:text-amber-800">Reset Password</button>
+                      <button onClick={() => setResetting(s)} className="text-xs font-medium text-amber-600 bg-amber-50 px-3 py-1.5 rounded-lg transition-colors">Reset Password</button>
                     )}
                     {s.role !== "superadmin" && (
-                      <button onClick={() => setDeleting(s)} className="text-xs text-red-500 hover:text-red-700">Delete</button>
+                      <button onClick={() => setDeleting(s)} className="text-xs font-medium text-red-600 bg-red-50 px-3 py-1.5 rounded-lg transition-colors">Delete</button>
                     )}
                   </div>
                 </div>

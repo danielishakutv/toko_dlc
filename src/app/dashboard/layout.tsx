@@ -232,7 +232,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {pathname.startsWith("/dashboard/course/") ? (
           <>{children}</>
         ) : (
-          <div className="px-4 sm:px-8 py-8 max-w-5xl">
+          <div className="px-4 pt-14 pb-8 sm:px-6 md:pt-8 lg:px-8 max-w-5xl">
             {children}
           </div>
         )}
