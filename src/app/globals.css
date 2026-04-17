@@ -298,6 +298,8 @@ table { border-collapse: collapse; }
 .bg-white\/90 { background-color: rgba(255,255,255,0.9); }
 .bg-white\/95 { background-color: rgba(255,255,255,0.95); }
 .bg-red-50 { background-color: var(--red-50); }
+.bg-red-600 { background-color: var(--red-600); }
+.bg-red-700 { background-color: var(--red-700); }
 .bg-green-50 { background-color: var(--green-50); }
 .bg-blue-50 { background-color: var(--blue-50); }
 .bg-yellow-50 { background-color: var(--yellow-50); }
