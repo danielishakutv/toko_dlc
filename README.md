@@ -53,3 +53,15 @@ npm install
 npm run build
 pm2 start npm --name "toko-academy" -- start -- -p 3000
 pm2 save
+
+
+
+root@vmi2446060:/home/learn/public_html# sudo -u postgres psql -c "CREATE USER toko_admin WITH PASSWORD 'pm2logstoko-academylines200';" -c "CREATE DATABASE toko_academy OWNER toko_admin;" -c "GRANT ALL PRIVILEGES ON DATABASE toko_academy TO toko_admin;"
+
+
+
+
+cd /home/learn/public_html && git pull origin main && npm ci && npm run build
+cp -r .next/static .next/standalone/.next/static
+cp -r public .next/standalone/public
+pm2 restart toko-academy

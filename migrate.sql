@@ -41,9 +41,15 @@ CREATE TABLE IF NOT EXISTS users (
   password_hash VARCHAR(255) NOT NULL,
   role user_role NOT NULL DEFAULT 'student',
   avatar_url TEXT,
+  must_change_password BOOLEAN NOT NULL DEFAULT true,
   created_at TIMESTAMP NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
+
+-- Add must_change_password column if it doesn't exist (for existing databases)
+DO $$ BEGIN
+  ALTER TABLE users ADD COLUMN must_change_password BOOLEAN NOT NULL DEFAULT true;
+EXCEPTION WHEN duplicate_column THEN null; END $$;
 
 -- courses
 CREATE TABLE IF NOT EXISTS courses (

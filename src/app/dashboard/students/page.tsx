@@ -42,6 +42,10 @@ export default function StudentsPage() {
   // Delete confirm
   const [deleting, setDeleting] = useState<Student | null>(null);
 
+  // Reset password confirm
+  const [resetting, setResetting] = useState<Student | null>(null);
+  const [resetLoading, setResetLoading] = useState(false);
+
   const perPage = 20;
   const role = getUserRole();
 
@@ -154,6 +158,29 @@ export default function StudentsPage() {
     }
   }
 
+  async function handleResetPassword() {
+    if (!resetting) return;
+    const token = getToken();
+    if (!token) return;
+    setResetLoading(true);
+    try {
+      const res = await fetch(`/api/admin/users/${resetting.id}/reset-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({}),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error || "Reset failed");
+      }
+    } catch {
+      setError("Network error");
+    } finally {
+      setResetLoading(false);
+      setResetting(null);
+    }
+  }
+
   if (role !== "superadmin") {
     return (
       <div>
@@ -230,6 +257,11 @@ export default function StudentsPage() {
                             Edit
                           </button>
                           {s.role !== "superadmin" && (
+                            <button onClick={() => setResetting(s)} className="text-xs text-amber-600 hover:text-amber-800 transition-colors px-2 py-1 rounded hover:bg-amber-50">
+                              Reset Password
+                            </button>
+                          )}
+                          {s.role !== "superadmin" && (
                             <button onClick={() => setDeleting(s)} className="text-xs text-red-500 hover:text-red-700 transition-colors px-2 py-1 rounded hover:bg-red-50">
                               Delete
                             </button>
@@ -259,6 +291,9 @@ export default function StudentsPage() {
                   <p className="text-xs text-gray-500 mb-2">{s.email}</p>
                   <div className="flex gap-2">
                     <button onClick={() => openEdit(s)} className="text-xs text-gray-500 hover:text-gray-900">Edit</button>
+                    {s.role !== "superadmin" && (
+                      <button onClick={() => setResetting(s)} className="text-xs text-amber-600 hover:text-amber-800">Reset Password</button>
+                    )}
                     {s.role !== "superadmin" && (
                       <button onClick={() => setDeleting(s)} className="text-xs text-red-500 hover:text-red-700">Delete</button>
                     )}
@@ -365,6 +400,37 @@ export default function StudentsPage() {
                 className="px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-violet-600 to-indigo-600 rounded-xl hover:from-violet-700 hover:to-indigo-700 transition-all duration-200 shadow-md shadow-violet-500/25"
               >
                 {saving ? "Saving..." : editing ? "Update" : "Create"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reset Password Confirmation */}
+      {resetting && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setResetting(null)} />
+          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-sm p-6">
+            <h2 className="text-lg font-bold text-gray-900 mb-2">Reset Password</h2>
+            <p className="text-sm text-gray-600 mb-2">
+              Reset password for <span className="font-medium">{resetting.firstName} {resetting.lastName}</span>?
+            </p>
+            <p className="text-xs text-gray-400 mb-6">
+              Password will be set to the default (<span className="font-mono">Toko@2022</span>). The user will be prompted to change it on next login.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setResetting(null)}
+                className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleResetPassword}
+                disabled={resetLoading}
+                className="px-4 py-2 text-sm font-semibold text-white bg-amber-600 rounded-xl hover:bg-amber-700 transition-colors disabled:opacity-60"
+              >
+                {resetLoading ? "Resetting..." : "Reset Password"}
               </button>
             </div>
           </div>

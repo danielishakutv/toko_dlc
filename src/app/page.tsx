@@ -60,7 +60,11 @@ export default function LoginPage() {
       }
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
-      router.push("/dashboard");
+      if (data.user.mustChangePassword) {
+        router.push("/change-password");
+      } else {
+        router.push("/dashboard");
+      }
     } catch {
       setError("Network error. Please try again.");
     } finally {

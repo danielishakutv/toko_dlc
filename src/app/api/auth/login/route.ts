@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
     }
 
     const { rows } = await pool.query(
-      "SELECT id, first_name, last_name, email, password_hash, role, avatar_url FROM users WHERE email = $1",
+      "SELECT id, first_name, last_name, email, password_hash, role, avatar_url, must_change_password FROM users WHERE email = $1",
       [email.toLowerCase().trim()]
     );
 
@@ -39,6 +39,7 @@ export async function POST(req: NextRequest) {
         email: user.email,
         role: user.role,
         avatarUrl: user.avatar_url,
+        mustChangePassword: user.must_change_password,
       },
     });
 
