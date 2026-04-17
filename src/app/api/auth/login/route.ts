@@ -1,4 +1,5 @@
 import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 import { NextRequest, NextResponse } from "next/server";
 import pool from "@/lib/db";
 import { signAccessToken, signRefreshToken } from "@/lib/auth";
@@ -44,6 +45,20 @@ export async function POST(req: NextRequest) {
     });
 
     response.cookies.set("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+      path: "/",
+    });
+
+    // Session cookie for middleware route protection
+    const sessionToken = jwt.sign(
+      { userId: user.id, role: user.role, mustChangePassword: user.must_change_password },
+      process.env.JWT_SECRET!,
+      { expiresIn: "7d" }
+    );
+    response.cookies.set("session", sessionToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",

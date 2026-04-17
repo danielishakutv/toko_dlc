@@ -16,5 +16,12 @@ export async function POST(req: NextRequest) {
     maxAge: 0,
     path: "/",
   });
+  response.cookies.set("session", "", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+    maxAge: 0,
+    path: "/",
+  });
   return response;
 }

@@ -99,7 +99,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     } catch { /* ignore */ }
   }, []);
 
-  function handleLogout() {
+  async function handleLogout() {
+    try {
+      const token = localStorage.getItem("token");
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+    } catch { /* ignore */ }
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     router.push("/");

@@ -1,4 +1,5 @@
 import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 import { NextRequest, NextResponse } from "next/server";
 import pool from "@/lib/db";
 import { authenticate, unauthorized, badRequest, serverError } from "@/lib/auth";
@@ -35,7 +36,21 @@ export async function PUT(req: NextRequest) {
       [hash, payload.userId]
     );
 
-    return NextResponse.json({ message: "Password changed successfully" });
+    // Reissue session cookie with mustChangePassword cleared
+    const sessionToken = jwt.sign(
+      { userId: payload.userId, role: payload.role, mustChangePassword: false },
+      process.env.JWT_SECRET!,
+      { expiresIn: "7d" }
+    );
+    const response = NextResponse.json({ message: "Password changed successfully" });
+    response.cookies.set("session", sessionToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 60 * 60 * 24 * 7,
+      path: "/",
+    });
+    return response;
   } catch (err: unknown) {
     if (err instanceof Error && err.message === "Unauthorized") return unauthorized();
     return serverError();
