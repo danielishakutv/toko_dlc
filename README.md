@@ -64,4 +64,5 @@ root@vmi2446060:/home/learn/public_html# sudo -u postgres psql -c "CREATE USER t
 cd /home/learn/public_html && git pull origin main && npm ci && npm run build
 cp -r .next/static .next/standalone/.next/static
 cp -r public .next/standalone/public
+cp .env.local .next/standalone/.env.local
 pm2 restart toko-academy
