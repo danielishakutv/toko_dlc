@@ -3,9 +3,51 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { courses } from "@/app/data";
-import { courseContentMap } from "@/app/data-content";
-import CourseIcon from "@/app/CourseIcon";
+
+function getToken() {
+  return typeof window !== "undefined" ? localStorage.getItem("token") : null;
+}
+
+interface Lesson {
+  id: string;
+  title: string;
+  videoUrl: string | null;
+  duration: string | null;
+  body: string | null;
+  sortOrder: number;
+  subtopics: string[];
+}
+
+interface Section {
+  id: string;
+  title: string;
+  sortOrder: number;
+  lessons: Lesson[];
+}
+
+interface Resource {
+  id: string;
+  type: string;
+  title: string;
+  description: string;
+  url: string;
+  fileSize: string;
+}
+
+interface CourseData {
+  id: string;
+  slug: string;
+  title: string;
+  icon: string;
+  description: string;
+  about: string;
+  price: number;
+  hours: number;
+  quizzes: number;
+  hasCertificate: boolean;
+  sections: Section[];
+  resources: Resource[];
+}
 
 /* ── Inline SVG icon components ── */
 const MessageCircleIcon = ({ className }: { className?: string }) => (
@@ -42,55 +84,8 @@ const ChevronRightIcon = ({ className }: { className?: string }) => (
   <svg className={className} fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" /></svg>
 );
 
-// Demo completion data per course
-const completionMap: Record<string, Record<string, boolean>> = {
-  "web-development-fundamentals": {
-    "What is HTML?": true,
-    "Document structure": true,
-    "Tags & elements": true,
-    "Forms & inputs": false,
-    "CSS selectors": true,
-    "Box model": true,
-    "Flexbox & Grid": true,
-    "Responsive design": false,
-    "Variables & types": true,
-    "Functions": false,
-    "DOM manipulation": false,
-    "Events & listeners": false,
-  },
-  "ui-ux-design-principles": {
-    "User interviews": true,
-    "Personas & journeys": true,
-    "Information architecture": false,
-    "Design principles": true,
-    "Typography & color": false,
-    "Component systems": false,
-    "Responsive layouts": false,
-    "Wireframing tools": false,
-    "Interactive prototypes": false,
-    "Usability testing": false,
-    "Iterating on feedback": false,
-  },
-  "cybersecurity-awareness": {
-    "Common attack types": true,
-    "Phishing & social engineering": false,
-    "Malware overview": false,
-    "Password management": false,
-    "Multi-factor authentication": false,
-    "Encryption basics": false,
-    "Secure browsing": false,
-    "Security policies": false,
-    "Incident response": false,
-    "Compliance basics": false,
-  },
-};
-
-function getCompletion(slug: string, lesson: string) {
-  return completionMap[slug]?.[lesson] ?? false;
-}
-
-function lessonId(lesson: string) {
-  return lesson.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+function lessonAnchor(id: string) {
+  return `lesson-${id}`;
 }
 
 const quickActions = [
@@ -104,14 +99,41 @@ const quickActions = [
 
 export default function EnrolledCoursePage() {
   const { slug } = useParams<{ slug: string }>();
-  const course = courses.find((c) => c.slug === slug);
-  const content = slug ? courseContentMap[slug] : undefined;
+  const [course, setCourse] = useState<CourseData | null>(null);
+  const [completedIds, setCompletedIds] = useState<Set<string>>(new Set());
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeLesson, setActiveLesson] = useState("");
   const contentRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    async function load() {
+      const token = getToken();
+      try {
+        const [courseRes, progressRes] = await Promise.all([
+          fetch(`/api/courses/${slug}`),
+          token
+            ? fetch(`/api/courses/${slug}/progress`, { headers: { Authorization: `Bearer ${token}` } })
+            : Promise.resolve(null),
+        ]);
+        if (!courseRes.ok) { setError("Course not found"); setLoading(false); return; }
+        setCourse(await courseRes.json());
+        if (progressRes?.ok) {
+          const p = await progressRes.json();
+          setCompletedIds(new Set((p.completedLessonIds || []).map(String)));
+        }
+      } catch { setError("Failed to load course"); }
+      setLoading(false);
+    }
+    load();
+  }, [slug]);
+
   // Build flat list of all lessons
   const allLessons = course?.sections.flatMap((s) => s.lessons) ?? [];
+  const totalLessons = allLessons.length;
+  const completedLessons = allLessons.filter((l) => completedIds.has(String(l.id))).length;
+  const progress = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
 
   // Track which lesson is currently in view
   const handleScroll = useCallback(() => {
@@ -132,14 +154,23 @@ export default function EnrolledCoursePage() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [handleScroll]);
 
-  if (!course) return <p className="text-gray-500 py-10">Course not found.</p>;
+  async function markComplete(lessonId: string) {
+    const token = getToken();
+    if (!token) return;
+    try {
+      const res = await fetch(`/api/lessons/${lessonId}/complete`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) setCompletedIds((prev) => new Set(prev).add(String(lessonId)));
+    } catch { /* ignore */ }
+  }
 
-  const totalLessons = allLessons.length;
-  const completedLessons = allLessons.filter((l) => getCompletion(slug, l)).length;
-  const progress = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
+  if (loading) return <div className="p-8 text-center text-gray-400">Loading...</div>;
+  if (error || !course) return <p className="text-gray-500 py-10">{error || "Course not found."}</p>;
 
-  function scrollToLesson(lesson: string) {
-    const el = document.getElementById(lessonId(lesson));
+  function scrollToLesson(id: string) {
+    const el = document.getElementById(lessonAnchor(id));
     if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
@@ -154,7 +185,7 @@ export default function EnrolledCoursePage() {
 
         <div className="flex items-start gap-4 mt-2">
           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-100 to-indigo-100 flex items-center justify-center shrink-0">
-            <CourseIcon name={course.icon} className="w-6 h-6 text-violet-600" />
+            <svg className="w-6 h-6 text-violet-600" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.331 0 4.472.89 6.042 2.346m0-14.304a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.346" /></svg>
           </div>
           <div className="flex-1 min-w-0">
             <h1 className="text-xl font-bold text-gray-900 mb-1">{course.title}</h1>
@@ -186,23 +217,23 @@ export default function EnrolledCoursePage() {
         {/* Lesson sidebar */}
         <aside className={`${sidebarOpen ? "w-72" : "w-0"} shrink-0 transition-all duration-200 overflow-hidden border-r border-white/40 bg-white/60 backdrop-blur-sm hidden lg:block sticky top-0 self-start h-screen`}>
           <div className="w-72 h-full overflow-y-auto py-4">
-            {course.sections.map((section, si) => {
-              const sectionCompleted = section.lessons.filter((l) => getCompletion(slug, l)).length;
+            {course.sections.map((section) => {
+              const sectionCompleted = section.lessons.filter((l) => completedIds.has(String(l.id))).length;
               return (
-                <div key={si} className="mb-2">
+                <div key={section.id} className="mb-2">
                   <div className="px-4 py-2 flex items-center justify-between">
                     <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">
                       {section.title}
                     </h3>
                     <span className="text-xs text-gray-400">{sectionCompleted}/{section.lessons.length}</span>
                   </div>
-                  {section.lessons.map((lesson, li) => {
-                    const done = getCompletion(slug, lesson);
-                    const active = activeLesson === lessonId(lesson);
+                  {section.lessons.map((lesson) => {
+                    const done = completedIds.has(String(lesson.id));
+                    const active = activeLesson === lessonAnchor(lesson.id);
                     return (
                       <button
-                        key={li}
-                        onClick={() => scrollToLesson(lesson)}
+                        key={lesson.id}
+                        onClick={() => scrollToLesson(lesson.id)}
                         className={`w-full text-left px-4 py-2 flex items-center gap-2.5 text-sm transition-all duration-200 ${
                           active ? "bg-violet-50/80 text-violet-900 font-medium" : "text-gray-600 hover:bg-white/60"
                         }`}
@@ -214,7 +245,7 @@ export default function EnrolledCoursePage() {
                             </svg>
                           )}
                         </div>
-                        <span className={done ? "line-through text-gray-400" : ""}>{lesson}</span>
+                        <span className={done ? "line-through text-gray-400" : ""}>{lesson.title}</span>
                       </button>
                     );
                   })}
@@ -223,13 +254,15 @@ export default function EnrolledCoursePage() {
             })}
 
             {/* Resources link in sidebar */}
-            <button
-              onClick={() => document.getElementById("resources")?.scrollIntoView({ behavior: "smooth", block: "start" })}
-              className="w-full text-left px-4 py-2 flex items-center gap-2.5 text-sm text-gray-600 hover:bg-gray-50 mt-2 border-t border-gray-100 pt-3"
-            >
-              <DownloadIcon className="w-4 h-4 text-gray-400" />
-              Resources
-            </button>
+            {course.resources.length > 0 && (
+              <button
+                onClick={() => document.getElementById("resources")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+                className="w-full text-left px-4 py-2 flex items-center gap-2.5 text-sm text-gray-600 hover:bg-gray-50 mt-2 border-t border-gray-100 pt-3"
+              >
+                <DownloadIcon className="w-4 h-4 text-gray-400" />
+                Resources
+              </button>
+            )}
           </div>
         </aside>
 
@@ -247,21 +280,20 @@ export default function EnrolledCoursePage() {
           <div className="max-w-3xl mx-auto px-4 sm:px-8 py-8">
             {/* Lesson content */}
             {course.sections.map((section, si) => (
-              <div key={si}>
+              <div key={section.id}>
                 <h2 className="text-lg font-bold text-gray-900 mb-6 mt-2">
                   Section {si + 1}: {section.title}
                 </h2>
 
-                {section.lessons.map((lesson, li) => {
-                  const done = getCompletion(slug, lesson);
-                  const lessonContent = content?.lessons[lesson];
-                  const globalIndex = course.sections.slice(0, si).reduce((a, s) => a + s.lessons.length, 0) + li + 1;
+                {section.lessons.map((lesson) => {
+                  const done = completedIds.has(String(lesson.id));
+                  const globalIndex = course.sections.slice(0, si).reduce((a, s) => a + s.lessons.length, 0) + section.lessons.indexOf(lesson) + 1;
 
                   return (
                     <article
-                      key={li}
-                      id={lessonId(lesson)}
-                      data-lesson={lessonId(lesson)}
+                      key={lesson.id}
+                      id={lessonAnchor(lesson.id)}
+                      data-lesson={lessonAnchor(lesson.id)}
                       className="mb-12 scroll-mt-24"
                     >
                       {/* Lesson header */}
@@ -273,47 +305,55 @@ export default function EnrolledCoursePage() {
                             </svg>
                           ) : globalIndex}
                         </div>
-                        <div>
-                          <h3 className="text-base font-bold text-gray-900">{lesson}</h3>
-                          {lessonContent && <span className="text-xs text-gray-400">{lessonContent.duration}</span>}
+                        <div className="flex-1">
+                          <h3 className="text-base font-bold text-gray-900">{lesson.title}</h3>
+                          {lesson.duration && <span className="text-xs text-gray-400">{lesson.duration}</span>}
                         </div>
+                        {!done && (
+                          <button
+                            onClick={() => markComplete(lesson.id)}
+                            className="text-xs text-violet-600 hover:text-violet-800 font-medium px-2 py-1 rounded hover:bg-violet-50 transition-colors shrink-0"
+                          >
+                            Mark complete
+                          </button>
+                        )}
                       </div>
 
                       {/* Video placeholder */}
-                      {lessonContent && (
+                      {lesson.videoUrl && (
                         <div className="aspect-video bg-gray-900 rounded-xl mb-5 flex items-center justify-center relative overflow-hidden group cursor-pointer">
                           <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/20" />
                           <div className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center group-hover:bg-white/30 transition-colors">
                             <PlayIcon className="w-6 h-6 text-white ml-0.5" fill="white" />
                           </div>
-                          <span className="absolute bottom-3 right-3 text-xs text-white/80 bg-black/40 rounded px-2 py-0.5">{lessonContent.duration}</span>
+                          {lesson.duration && <span className="absolute bottom-3 right-3 text-xs text-white/80 bg-black/40 rounded px-2 py-0.5">{lesson.duration}</span>}
                         </div>
                       )}
 
                       {/* Text content */}
-                      {lessonContent && (
+                      {lesson.body && (
                         <div className="prose-sm">
-                          <p className="text-sm text-gray-700 leading-relaxed mb-4">{lessonContent.body}</p>
+                          <p className="text-sm text-gray-700 leading-relaxed mb-4">{lesson.body}</p>
+                        </div>
+                      )}
 
-                          {/* Subtopics */}
-                          {lessonContent.subtopics.length > 0 && (
-                            <div className="bg-white/60 backdrop-blur-sm border border-white/60 rounded-xl p-4">
-                              <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Topics covered</h4>
-                              <ul className="space-y-1.5">
-                                {lessonContent.subtopics.map((topic, ti) => (
-                                  <li key={ti} className="flex items-center gap-2 text-sm text-gray-600">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-gray-300 shrink-0" />
-                                    {topic}
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
+                      {/* Subtopics */}
+                      {lesson.subtopics.length > 0 && (
+                        <div className="bg-white/60 backdrop-blur-sm border border-white/60 rounded-xl p-4">
+                          <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Topics covered</h4>
+                          <ul className="space-y-1.5">
+                            {lesson.subtopics.map((topic, ti) => (
+                              <li key={ti} className="flex items-center gap-2 text-sm text-gray-600">
+                                <span className="w-1.5 h-1.5 rounded-full bg-gray-300 shrink-0" />
+                                {topic}
+                              </li>
+                            ))}
+                          </ul>
                         </div>
                       )}
 
                       {/* No content fallback */}
-                      {!lessonContent && (
+                      {!lesson.body && !lesson.videoUrl && lesson.subtopics.length === 0 && (
                         <div className="bg-white/50 backdrop-blur-sm rounded-xl p-6 text-center">
                           <p className="text-sm text-gray-400">Content coming soon</p>
                         </div>
@@ -325,17 +365,17 @@ export default function EnrolledCoursePage() {
             ))}
 
             {/* ─── Resources Section ─── */}
-            {content?.resources && content.resources.length > 0 && (
+            {course.resources.length > 0 && (
               <section id="resources" className="scroll-mt-24 mt-8 mb-12">
                 <h2 className="text-lg font-bold text-gray-900 mb-5">Resources</h2>
 
                 {/* PDFs */}
-                {content.resources.filter((r) => r.type === "pdf").length > 0 && (
+                {course.resources.filter((r) => r.type === "pdf").length > 0 && (
                   <div className="mb-6">
                     <h3 className="text-sm font-semibold text-gray-700 mb-3">Downloadable Files</h3>
                     <div className="space-y-2">
-                      {content.resources.filter((r) => r.type === "pdf").map((r, i) => (
-                        <div key={i} className="flex items-center gap-3 bg-white/70 backdrop-blur-sm border border-white/60 shadow-sm rounded-xl px-4 py-3 hover:shadow-md transition-all duration-200 group cursor-pointer">
+                      {course.resources.filter((r) => r.type === "pdf").map((r) => (
+                        <div key={r.id} className="flex items-center gap-3 bg-white/70 backdrop-blur-sm border border-white/60 shadow-sm rounded-xl px-4 py-3 hover:shadow-md transition-all duration-200 group cursor-pointer">
                           <div className="w-9 h-9 rounded-lg bg-red-50 flex items-center justify-center shrink-0">
                             <FileTextIcon className="w-4 h-4 text-red-500" />
                           </div>
@@ -344,7 +384,7 @@ export default function EnrolledCoursePage() {
                             <p className="text-xs text-gray-500">{r.description}</p>
                           </div>
                           <div className="flex items-center gap-2 shrink-0">
-                            <span className="text-xs text-gray-400">{r.size}</span>
+                            <span className="text-xs text-gray-400">{r.fileSize}</span>
                             <DownloadIcon className="w-4 h-4 text-gray-400 group-hover:text-gray-600" />
                           </div>
                         </div>
@@ -354,12 +394,12 @@ export default function EnrolledCoursePage() {
                 )}
 
                 {/* Links */}
-                {content.resources.filter((r) => r.type === "link").length > 0 && (
+                {course.resources.filter((r) => r.type === "link").length > 0 && (
                   <div>
                     <h3 className="text-sm font-semibold text-gray-700 mb-3">Further Study</h3>
                     <div className="space-y-2">
-                      {content.resources.filter((r) => r.type === "link").map((r, i) => (
-                        <div key={i} className="flex items-center gap-3 bg-white/70 backdrop-blur-sm border border-white/60 shadow-sm rounded-xl px-4 py-3 hover:shadow-md transition-all duration-200 group cursor-pointer">
+                      {course.resources.filter((r) => r.type === "link").map((r) => (
+                        <div key={r.id} className="flex items-center gap-3 bg-white/70 backdrop-blur-sm border border-white/60 shadow-sm rounded-xl px-4 py-3 hover:shadow-md transition-all duration-200 group cursor-pointer">
                           <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
                             <ExternalLinkIcon className="w-4 h-4 text-blue-500" />
                           </div>
