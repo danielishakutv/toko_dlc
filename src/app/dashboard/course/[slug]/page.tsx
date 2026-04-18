@@ -177,7 +177,7 @@ export default function EnrolledCoursePage() {
   return (
     <div>
       {/* Course header */}
-      <div className="border-b border-white/40 bg-white/70 backdrop-blur-sm px-4 sm:px-6 py-4">
+      <div className="border-b border-white/40 bg-white/70 backdrop-blur-sm px-4 sm:px-6 py-4 pt-14 md:pt-4">
         <Link href="/dashboard/my-courses" className="text-sm text-gray-500 hover:text-gray-900 transition-colors mb-3 inline-flex items-center gap-1">
           <ChevronLeftIcon className="w-4 h-4" />
           Back to My Courses
@@ -204,7 +204,7 @@ export default function EnrolledCoursePage() {
         {/* Quick Actions */}
         <div className="flex flex-wrap gap-2 mt-4">
           {quickActions.map((a) => (
-            <button key={a.label} className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors hover:brightness-95 ${a.color}`}>
+            <button key={a.label} className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors hover:brightness-95 ${a.color}`}>
               {a.icon}
               <span className="hidden sm:inline">{a.label}</span>
             </button>
@@ -213,7 +213,7 @@ export default function EnrolledCoursePage() {
       </div>
 
       {/* Two-column layout */}
-      <div className="flex min-h-[calc(100vh-13rem)]">
+      <div className="flex min-h-[calc(100vh-16rem)] md:min-h-[calc(100vh-13rem)]">
         {/* Lesson sidebar */}
         <aside className={`${sidebarOpen ? "w-72" : "w-0"} shrink-0 transition-all duration-200 overflow-hidden border-r border-white/40 bg-white/60 backdrop-blur-sm hidden lg:block sticky top-0 self-start h-screen`}>
           <div className="w-72 h-full overflow-y-auto py-4">
@@ -234,11 +234,11 @@ export default function EnrolledCoursePage() {
                       <button
                         key={lesson.id}
                         onClick={() => scrollToLesson(lesson.id)}
-                        className={`w-full text-left px-4 py-2 flex items-center gap-2.5 text-sm transition-all duration-200 ${
+                        className={`w-full text-left px-4 py-2.5 flex items-center gap-3.5 text-sm transition-all duration-200 ${
                           active ? "bg-violet-50/80 text-violet-900 font-medium" : "text-gray-600 hover:bg-white/60"
                         }`}
                       >
-                        <div className={`w-4 h-4 rounded flex items-center justify-center shrink-0 ${done ? "bg-gradient-to-r from-violet-600 to-indigo-600" : "border border-gray-300"}`}>
+                        <div className={`w-5 h-5 rounded flex items-center justify-center shrink-0 ${done ? "bg-gradient-to-r from-violet-600 to-indigo-600" : "border border-gray-300"}`}>
                           {done && (
                             <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
@@ -297,22 +297,22 @@ export default function EnrolledCoursePage() {
                       className="mb-12 scroll-mt-24"
                     >
                       {/* Lesson header */}
-                      <div className="flex items-start gap-3 mb-4">
-                          <div className={`mt-0.5 w-6 h-6 rounded-md flex items-center justify-center shrink-0 text-xs font-bold ${done ? "bg-gradient-to-r from-violet-600 to-indigo-600 text-white" : "bg-white/70 text-gray-500"}`}>
+                      <div className="flex items-start gap-4 mb-4">
+                        <div className={`mt-0.5 w-7 h-7 rounded-md flex items-center justify-center shrink-0 text-xs font-bold ${done ? "bg-gradient-to-r from-violet-600 to-indigo-600 text-white" : "bg-white/70 border border-gray-200 text-gray-500"}`}>
                           {done ? (
                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                             </svg>
                           ) : globalIndex}
                         </div>
-                        <div className="flex-1">
-                          <h3 className="text-base font-bold text-gray-900">{lesson.title}</h3>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-base font-bold text-gray-900 leading-snug">{lesson.title}</h3>
                           {lesson.duration && <span className="text-xs text-gray-400">{lesson.duration}</span>}
                         </div>
                         {!done && (
                           <button
                             onClick={() => markComplete(lesson.id)}
-                            className="text-xs text-violet-600 hover:text-violet-800 font-medium px-2 py-1 rounded hover:bg-violet-50 transition-colors shrink-0"
+                            className="text-xs text-violet-600 hover:text-violet-800 font-medium px-3 py-1.5 rounded-lg hover:bg-violet-50 transition-colors shrink-0 border border-violet-200"
                           >
                             Mark complete
                           </button>
