@@ -58,6 +58,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       })),
     });
   } catch (err: unknown) {
+    console.error("GET /enrollments error:", err);
     if (err instanceof Error && err.message === "Unauthorized") return unauthorized();
     if (err instanceof Error && err.message === "Forbidden") return forbidden();
     return serverError();

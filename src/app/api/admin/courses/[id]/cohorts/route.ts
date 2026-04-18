@@ -29,6 +29,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       })),
     });
   } catch (err: unknown) {
+    console.error("GET /cohorts error:", err);
     if (err instanceof Error && err.message === "Unauthorized") return unauthorized();
     if (err instanceof Error && err.message === "Forbidden") return forbidden();
     return serverError();
@@ -64,6 +65,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       createdAt: r.created_at,
     }, { status: 201 });
   } catch (err: unknown) {
+    console.error("POST /cohorts error:", err);
     if (err instanceof Error && err.message === "Unauthorized") return unauthorized();
     if (err instanceof Error && err.message === "Forbidden") return forbidden();
     const pgErr = err as { code?: string };

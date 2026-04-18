@@ -66,3 +66,7 @@ cp -r .next/static .next/standalone/.next/static
 cp -r public .next/standalone/public
 cp .env.local .next/standalone/.env.local
 pm2 restart toko-academy
+
+
+DEFAULT PASSWORD
+Newuser1234
