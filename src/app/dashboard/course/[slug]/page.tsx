@@ -319,16 +319,32 @@ export default function EnrolledCoursePage() {
                         )}
                       </div>
 
-                      {/* Video placeholder */}
-                      {lesson.videoUrl && (
-                        <div className="aspect-video bg-gray-900 rounded-xl mb-5 flex items-center justify-center relative overflow-hidden group cursor-pointer">
-                          <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/20" />
-                          <div className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center group-hover:bg-white/30 transition-colors">
-                            <PlayIcon className="w-6 h-6 text-white ml-0.5" fill="white" />
+                      {/* Video embed */}
+                      {lesson.videoUrl && (() => {
+                        const match = lesson.videoUrl!.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([a-zA-Z0-9_-]{11})/);
+                        const videoId = match?.[1];
+                        if (videoId) {
+                          return (
+                            <div className="aspect-video rounded-xl mb-5 overflow-hidden bg-black">
+                              <iframe
+                                src={`https://www.youtube-nocookie.com/embed/${videoId}?rel=0&modestbranding=1&showinfo=0&disablekb=0`}
+                                title={lesson.title}
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowFullScreen
+                                className="w-full h-full border-0"
+                              />
+                            </div>
+                          );
+                        }
+                        return (
+                          <div className="aspect-video bg-gray-900 rounded-xl mb-5 flex items-center justify-center relative overflow-hidden">
+                            <a href={lesson.videoUrl!} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-2 text-white/80 hover:text-white transition-colors">
+                              <PlayIcon className="w-12 h-12" fill="white" />
+                              <span className="text-xs">Open video</span>
+                            </a>
                           </div>
-                          {lesson.duration && <span className="absolute bottom-3 right-3 text-xs text-white/80 bg-black/40 rounded px-2 py-0.5">{lesson.duration}</span>}
-                        </div>
-                      )}
+                        );
+                      })()}
 
                       {/* Text content */}
                       {lesson.body && (
