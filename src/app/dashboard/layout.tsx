@@ -83,6 +83,31 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [userName, setUserName] = useState({ first: "", last: "", initials: "TL" });
 
   useEffect(() => {
+    const token = localStorage.getItem("token");
+
+    // If no token at all, redirect to login immediately
+    if (!token) {
+      router.replace("/login");
+      return;
+    }
+
+    // Validate token against the server
+    fetch("/api/me", { headers: { Authorization: `Bearer ${token}` } })
+      .then((res) => {
+        if (!res.ok) {
+          // 401 (expired/invalid) or 500 (server restarted / deployment) → force logout
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          router.replace("/login");
+        }
+      })
+      .catch(() => {
+        // Network error (server down during deployment) → force logout
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        router.replace("/login");
+      });
+
     try {
       const u = localStorage.getItem("user");
       if (u) {
@@ -97,7 +122,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         });
       }
     } catch { /* ignore */ }
-  }, []);
+  }, [router]);
 
   async function handleLogout() {
     try {
