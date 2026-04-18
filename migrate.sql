@@ -244,3 +244,6 @@ CREATE TABLE IF NOT EXISTS cohorts (
 DO $$ BEGIN
   ALTER TABLE enrollments ADD COLUMN cohort_id UUID REFERENCES cohorts(id) ON DELETE SET NULL;
 EXCEPTION WHEN duplicate_column THEN null; END $$;
+
+-- Grant permissions on cohorts table to toko_admin
+GRANT ALL PRIVILEGES ON TABLE cohorts TO toko_admin;
